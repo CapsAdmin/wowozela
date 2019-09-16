@@ -79,7 +79,7 @@ if SERVER then
 			if not workshopSounds[file_name] then
 				resource.AddFile("sound/wowozela/samples/" .. file_name)
 			end
-			resource.AddWorkshop("1864674313")
+			resource.AddWorkshop("108170491")
 		end
 	end
 
