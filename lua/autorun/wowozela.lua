@@ -450,6 +450,8 @@ do -- hooks
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
+		if not IsFirstTimePredicted() then return end
+		
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" then
 			local wep = ply:GetActiveWeapon()
@@ -460,13 +462,15 @@ do -- hooks
 				end
 
 				if CLIENT then
-					wowozela.KeyEvent(ply, key, true)
+					--wowozela.KeyEvent(ply, key, true)
 				end
 			end
 		end
 	end)
 
 	hook.Add("KeyRelease", "wowozela_keyrelease", function(ply, key)
+		if not IsFirstTimePredicted() then return end
+
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" then
 			if wowozela.IsValidKey(key) then
@@ -476,7 +480,7 @@ do -- hooks
 				end
 
 				if CLIENT then
-					wowozela.KeyEvent(ply, key, false)
+					--wowozela.KeyEvent(ply, key, false)
 				end
 			end
 		end
