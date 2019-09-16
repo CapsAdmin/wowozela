@@ -1,6 +1,10 @@
 if SERVER then AddCSLuaFile() end
 if not wowozela then wowozela = {} end
 
+if CLIENT then
+	wowozela.volume = CreateClientConVar("wowozela_volume","0.5",true,false)
+end
+
 wowozela.ValidNotes =
 {
 	["Left"] = IN_ATTACK,
@@ -162,6 +166,9 @@ do -- sample meta
 	end
 
 	function META:CanPlay()
+		if wowozela.disabled then return end
+
+
 		local wep = self.Player:GetActiveWeapon()
 		if wep:IsWeapon() and wep:GetClass() == "wowozela" then
 			self.Weapon = wep
@@ -203,12 +210,12 @@ do -- sample meta
 
 	function META:SetSample(i, path)
 		self.CSP[i] = CreateSound(self.Player, path or wowozela.DefaultSound)
-		self.CSP[i]:SetSoundLevel(100)
+		self.CSP[i]:SetSoundLevel(65)
 	end
 
 	function META:ChangeVolume(i, num)
 		if self.CSP[i] then
-			self.CSP[i]:ChangeVolume(self.Volume, -1)
+			self.CSP[i]:ChangeVolume((wowozela.intvolume or 1) * self.Volume, -1)
 		end
 	end
 
@@ -398,6 +405,13 @@ do -- hooks
 	end
 
 	function wowozela.Think()
+		if CLIENT then
+			local vol = wowozela.volume:GetFloat()
+			wowozela.intvolume = math.Clamp(vol,0.01,1)
+			wowozela.disabled = vol <= 0.01
+		end
+
+
 		if #wowozela.Samples > 0 then
 			for key, ply in pairs(player.GetAll()) do
 				local sampler = ply:GetSampler()

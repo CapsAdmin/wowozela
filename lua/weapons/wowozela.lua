@@ -141,8 +141,6 @@ if CLIENT then
     local space = 10
     local size_diagy
     local maxheight = 0
-    wowozela.xPos = 0
-    wowozela.xPos2 = 0
     local indexs = {}
     local PanelWidth = ScrW() * 0.75
     local function PosToIndex(posX)
@@ -156,6 +154,11 @@ if CLIENT then
     end
 
     function SWEP:DrawHUD()
+
+        if not self.xPos or not self.xPos2 then
+            self.xPos = -PanelWidth/2
+            self.xPos2 = -PanelWidth/2
+        end
 
         local left = self.Owner:KeyDown(IN_ATTACK) or input.IsMouseDown(MOUSE_LEFT)
         local right = self.Owner:KeyDown(IN_ATTACK2) or input.IsMouseDown(MOUSE_RIGHT)
@@ -181,8 +184,8 @@ if CLIENT then
                 end
 
             end
-            wowozela.xPos = -PanelWidth/2
-            wowozela.xPos2 = -PanelWidth/2
+            self.xPos = -PanelWidth/2
+            self.xPos2 = -PanelWidth/2
         end
 
         
@@ -200,14 +203,14 @@ if CLIENT then
 
             local col1 = Color( 75, 75, 75, 255 )
             local col2 = Color( 75, 75, 75, 255 )
-            if I == PosToIndex(wowozela.xPos + PanelWidth/2) then
+            if I == PosToIndex(self.xPos + PanelWidth/2) then
                 col1 = Color( 150, 50, 50, 255 )
             end
-            if I == PosToIndex(wowozela.xPos2 + PanelWidth/2) then
+            if I == PosToIndex(self.xPos2 + PanelWidth/2) then
                 col2 = Color( 150, 50, 50, 255 )
             end
-            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - wowozela.xPos, PanelY, col1, TEXT_ALIGN_LEFT )
-            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - wowozela.xPos2, PanelY + maxheight, col2, TEXT_ALIGN_LEFT )
+            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - self.xPos, PanelY, col1, TEXT_ALIGN_LEFT )
+            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - self.xPos2, PanelY + maxheight, col2, TEXT_ALIGN_LEFT )
             render.SetScissorRect(PanelX, PanelY, PanelX + PanelWidth, PanelY + PanelHeight, false)
             offsetX = offsetX + width + space
         end
@@ -220,9 +223,9 @@ if CLIENT then
             local mouseX, mouseY = gui.MousePos()
             local movePos = ((ScrW()/2 - mouseX) / (ScrW()/2)) * -32
             if left then
-                wowozela.xPos = math.Clamp(wowozela.xPos + movePos, -PanelWidth/2, size_diag-PanelWidth/2)
+                self.xPos = math.Clamp(self.xPos + movePos, -PanelWidth/2, size_diag-PanelWidth/2)
             elseif right then
-                wowozela.xPos2 = math.Clamp(wowozela.xPos2 + movePos, -PanelWidth/2, size_diag-PanelWidth/2)  
+                self.xPos2 = math.Clamp(self.xPos2 + movePos, -PanelWidth/2, size_diag-PanelWidth/2)  
             end
         else
             if(wason) then
@@ -234,14 +237,15 @@ if CLIENT then
 
 
     hook.Add("KeyRelease", "WowozelaFinalizeSelection", function(ply, key)
-        if key == IN_RELOAD and PanelWidth then
-            local index = PosToIndex(wowozela.xPos + PanelWidth/2) 
+        local wep = ply:GetActiveWeapon() 
+        if key == IN_RELOAD and PanelWidth and IsValid(wep) and wep:GetClass() == "wowozela" then
+            local index = PosToIndex((wep.xPos or 0) + PanelWidth/2) 
             if index ~= selection1 then
                 selection1 = index
                 RunConsoleCommand("wowozela_select_left", index)
             end
 
-            local index2 = PosToIndex(wowozela.xPos2 + PanelWidth/2) 
+            local index2 = PosToIndex((wep.xPos2 or 0) + PanelWidth/2) 
             if index2 ~= selection2 then
                 selection2 = index2
                 RunConsoleCommand("wowozela_select_right", index2)
