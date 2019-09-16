@@ -446,7 +446,11 @@ do -- hooks
 			net.WriteEntity(ply)
 			net.WriteInt(key, 32)
 			net.WriteBool(press)
-		net.Broadcast() 
+		if not filter then
+			net.SendOmit(ply)
+		else
+			net.Broadcast()
+		end 
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
