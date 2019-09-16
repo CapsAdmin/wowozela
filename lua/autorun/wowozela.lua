@@ -462,7 +462,7 @@ do -- hooks
 				end
 
 				if CLIENT then
-					--wowozela.KeyEvent(ply, key, true)
+					wowozela.KeyEvent(ply, key, true)
 				end
 			end
 		end
@@ -480,7 +480,7 @@ do -- hooks
 				end
 
 				if CLIENT then
-					--wowozela.KeyEvent(ply, key, false)
+					wowozela.KeyEvent(ply, key, false)
 				end
 			end
 		end
