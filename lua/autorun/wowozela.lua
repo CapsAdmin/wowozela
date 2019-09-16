@@ -1,11 +1,10 @@
-AddCSLuaFile()
-
-wowozela = {}
+if SERVER then AddCSLuaFile() end
+if not wowozela then wowozela = {} end
 
 wowozela.ValidNotes =
 {
-	IN_ATTACK,
-	IN_ATTACK2,
+	["Left"] = IN_ATTACK,
+	["Right"] = IN_ATTACK2
 }
 
 wowozela.ValidKeys =
@@ -14,32 +13,94 @@ wowozela.ValidKeys =
 	IN_ATTACK2,
 	IN_WALK,
 	IN_SPEED,
-	IN_USE,
+	IN_USE
 }
-if(SERVER) then
+
+if SERVER then
 	for key, value in pairs(wowozela.ValidNotes) do
-		concommand.Add("wowozela_select_" .. key, function(ply, _, args)
+		concommand.Add("wowozela_select_" .. key:lower(), function(ply, _, args)
 			local wep = ply:GetActiveWeapon()
 			if wep:IsValid() and wep:GetClass() == "wowozela" then
+				
 				local val = tonumber(args[1]) or 1
-				wep.dt[value] = val
+				local test = "SetNote" .. key -- naughty
+				
+				if wep[test] then
+					wep[test](wep, val)
+				end
 			end		
 		end)
 	end
-end
+	wowozela.Samples = {}
+	local workshopSounds = {
+		["bass.wav"] = true,
+		["bass3.wav"] = true,
+		["bassguitar2.wav"] = true,
+		["bell.wav"] = true,
+		["coolchiff.wav"] = true,
+		["crackpiano.wav"] = true,
+		["dingdong.wav"] = true,
+		["dooooooooh.wav"] = true,
+		["dusktodawn.wav"] = true,
+		["flute.wav"] = true,
+		["fmbass.wav"] = true,
+		["fuzz.wav"] = true,
+		["guitar.wav"] = true,
+		["hit.wav"] = true,
+		["honkytonk.wav"] = true,
+		["horn.wav"] = true,
+		["justice.wav"] = true,
+		["littleflower.wav"] = true,
+		["meow.wav"] = true,
+		["miku.wav"] = true,
+		["mmm.wav"] = true,
+		["oohh.wav"] = true,
+		["overdrive.wav"] = true,
+		["pianostab.wav"] = true,
+		["prima.wav"] = true,
+		["quack.wav"] = true,
+		["saw_880.wav"] = true,
+		["sine_880.wav"] = true,
+		["skull.wav"] = true,
+		["slap.wav"] = true,
+		["square_880.wav"] = true,
+		["string.wav"] = true,
+		["toypiano.wav"] = true,
+		["triangle_880.wav"] = true,
+		["trumpet.wav"] = true,
+		["woof.wav"] = true
+	}
 
-wowozela.Samples = {}
-
-for _, file_name in pairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
-	
-	table.insert(wowozela.Samples, "wowozela/samples/" .. file_name)
-
-	if SERVER then
-		resource.AddFile("sound/wowozela/samples/" .. file_name)
+	for _, file_name in pairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
+		
+		table.insert(wowozela.Samples, {"wowozela/samples/" .. file_name, file_name:match("(.+)%.wav")})
+		
+		if SERVER then
+			if not workshopSounds[file_name] then
+				resource.AddFile("sound/wowozela/samples/" .. file_name)
+			end
+			resource.AddWorkshop("1864674313")
+		end
 	end
+
+	table.sort(wowozela.Samples, function(a,b) return a[1] < b[1] end)
+	util.AddNetworkString("wowozela_update")
+	util.AddNetworkString("wowozela_key")
+
+	concommand.Add("wowozela_request_samples", function(ply)
+		net.Start("wowozela_update")
+			net.WriteTable(wowozela.Samples)
+		net.Send(ply)
+	end)
+
+else
+	wowozela.Samples = {}
+	net.Receive("wowozela_update", function()
+		wowozela.Samples = net.ReadTable()
+	end)
 end
 
-table.sort(wowozela.Samples, function(a,b) return a < b end)
+
 
 
 function wowozela.New(ply)
@@ -64,206 +125,14 @@ function wowozela.IsValidKey(key)
 end
 
 function wowozela.IsValidNote(key)
-	return table.HasValue(wowozela.ValidNotes, key)
+	for k,v in pairs(wowozela.ValidNotes) do
+		if v == key then
+			return k 
+		end
+	end
+	return false
 end
 
-do -- swep meta
-	local SWEP = {Primary = {}, Secondary = {}}
-
-	SWEP.Base = "weapon_base"
-
-	SWEP.Author = ""
-	SWEP.Contact = ""
-	SWEP.Purpose = ""
-	SWEP.Instructions = ""
-	SWEP.PrintName = "Wowozela"
-
-	SWEP.SlotPos = 1
-	SWEP.Slot = 1
-
-	SWEP.Spawnable = true
-
-	SWEP.AutoSwitchTo = true
-	SWEP.AutoSwitchFrom = true
-	SWEP.HoldType = "normal"
-
-	SWEP.Primary.ClipSize = -1
-	SWEP.Primary.DefaultClip = -1
-	SWEP.Primary.Automatic = false
-	SWEP.Primary.Ammo = "none"
-
-	SWEP.Secondary.ClipSize = -1
-	SWEP.Secondary.DefaultClip = -1
-	SWEP.Secondary.Automatic = false
-	SWEP.Secondary.Ammo = "none"
-
-	SWEP.DrawAmmo = false
-	SWEP.DrawCrosshair = true
-	SWEP.ViewModel = "models/weapons/v_hands.mdl"
-	SWEP.WorldModel = "models/weapons/w_bugbait.mdl"
-	SWEP.DrawWeaponInfoBox = true
-
-	function SWEP:SetupDataTables()
-		for i, key in ipairs(wowozela.ValidNotes) do
-			self:DTVar("Int", i, key)
-		end
-	end
-
-	function SWEP:PrintWeaponInfo() end
-	function SWEP:DrawWeaponSelection() end
-	function SWEP:DrawWorldModel() return true end
-	function SWEP:CanPrimaryAttack() return false end
-	function SWEP:CanSecondaryAttack() return false end
-	function SWEP:ShouldDropOnDie() return false end
-	function SWEP:Reload() return false end
-
-	function SWEP:Initialize()
-	   self:SetWeaponHoldType("normal")
-	end
-
-	if SERVER then
-	   function SWEP:OnDrop()
-		  self:Remove()
-	   end
-	end
-
-	function SWEP:Deploy()
-	   self.Think = self._Think
-	   return true
-	end
-
-	function SWEP:Holster()
-		if not self.Owner:KeyDown(IN_RELOAD) then
-			return true
-		end
-		
-		return false
-	end
-
-	function SWEP:OnKeyEvent(key, press)
-		--[[if press and wowozela.IsValidNote(key) and self.Owner:KeyDown(IN_RELOAD) then
-			self.dt[key] = math.Clamp((self.dt[key] + 1)%#wowozela.Samples, 1, #wowozela.Samples)
-			wowozela.BroadcastKeyEvent(self.Owner, key, press, true)
-			wowozela.BroadcastKeyEvent(self.Owner, key, press, false)
-		end]]
-	end
-
-	function SWEP:_Think()
-		if self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
-			self.Owner:GetViewModel():SetNoDraw(true)
-			self.Think = nil
-		end
-	end
-
-	function SWEP:GetViewModelPosition(pos, ang)
-	   pos.x = 35575
-	   pos.y = 35575
-	   pos.z = 35575
-
-	   return pos, ang
-	end
-	
-	if CLIENT then
-		local size = 80
-		local count = 4
-		
-		surface.CreateFont(
-			"WowozelaFont",
-			{
-				font		= "Roboto Bk",
-				size		= size,
-				weight		= 1000,
-			}
-		)
-		
-		local names = {}
-		local wason = false
-		local selection = 1
-		local alpha = 0
-		local showing = 5
-		function SWEP:DrawHUD()
-			local in1 = self.dt and self.dt[IN_ATTACK] ~= 0 and self.dt[IN_ATTACK] or 1
-			local in2 = self.dt and self.dt[IN_ATTACK2] ~= 0 and self.dt[IN_ATTACK2] or 1 
-			local left = self.Owner:KeyDown(IN_ATTACK) or input.IsMouseDown(MOUSE_LEFT)
-			local right = self.Owner:KeyDown(IN_ATTACK2) or input.IsMouseDown(MOUSE_RIGHT)
-			local total = #wowozela.Samples
-
-			if self.Owner:KeyDown(IN_RELOAD) then
-				if not wason then
-					gui.EnableScreenClicker(true)
-					wason = true
-				end
-				if left or right then
-					surface.SetFont("WowozelaFont")
-					
-					local start = math.max(selection - showing, 1)
-					local index_end = math.min(selection + showing, total)
-					local center = showing + 0.5
-					
-					for I = start, index_end, 1 do
-						if not names[I] then
-							names[I] = wowozela.Samples[I]:match("^wowozela/samples/(.+)%.wav")
-						end
-						
-						local w,h = surface.GetTextSize(names[I])
-						local col = HSVToColor(math.abs(selection - I) / center * 90, 1, 1)
-						
-						surface.SetTextColor(col.r, col.g, col.b, (1 - (math.abs(selection - I)/ center)^2)*255)
-						surface.SetTextPos(ScrW()/2 - w/2, ScrH() / 2 + h * (I-start) - h * center)
-						surface.DrawText(names[I])
-					end	
-					
-					--[[Selection]]
-
-					local scale = ScrH() / total
-					local selected1 = math.Clamp(math.ceil(gui.MouseY()/scale),1,total) 
-					
-					if left and selected1 ~= in1 then
-						RunConsoleCommand("cmd", "wowozela_select_1", selected1)
-					end
-					
-					if right and selected1 ~= in2 then
-						RunConsoleCommand("cmd", "wowozela_select_2", selected1)
-					end
-					selection = selected1
-				end
-			else
-				if(wason) then
-					gui.EnableScreenClicker(false)
-					wason = false
-				end
-				if not names[in1] then
-					names[in1] = wowozela.Samples[in1]:match("^wowozela/samples/(.+)%.wav")
-				end
-				
-				if not names[in2] then
-					names[in2] = wowozela.Samples[in2]:match("^wowozela/samples/(.+)%.wav")
-				end				
-			
-				draw.SimpleText(
-					names[in1], 
-					"WowozelaFont", 
-					16, 
-					ScrH() - ScrH()/2, 
-					HSVToColor((in1/total)*360, 1, 1), 
-					TEXT_ALIGN_LEFT, 
-					TEXT_ALIGN_CENTER
-				)
-					
-				draw.SimpleText(
-					names[in2], 
-					"WowozelaFont",
-					ScrW() - 16, 
-					ScrH() - ScrH()/2, 
-					HSVToColor((in2/total)*360, 1, 1), 
-					TEXT_ALIGN_RIGHT, 
-					TEXT_ALIGN_CENTER
-				)
-			end
-		end
-	end
-	weapons.Register(SWEP, "wowozela", true)
-end
 
 do -- sample meta
 	local META = {}
@@ -275,18 +144,19 @@ do -- sample meta
 		self.Player = ply
 
 		for i, path in pairs(wowozela.Samples) do
-			self:SetSample(i, path)
+			self:SetSample(i, path[1])
 		end
 
 		self.IDs = {}
 	end
 
 	function META:GetSampleIndex(key)
-		if wowozela.IsValidNote(key) then
+		local Note = wowozela.IsValidNote(key)
+		if Note then
 			local wep = self.Player:GetActiveWeapon()
-
-			if wep:IsWeapon() and wep.dt and wep:GetClass() == "wowozela" then
-				return math.Clamp(wep.dt[key], 1, #wowozela.Samples)
+			local get = "GetNote" .. Note
+			if wep:IsWeapon() and wep[get] and wep:GetClass() == "wowozela" then
+				return math.Clamp(wep[get](wep), 1, #wowozela.Samples)
 			end
 		end
 	end
@@ -408,7 +278,6 @@ do -- sample meta
 
 	function META:OnKeyEvent(key, press)
 		local id = self:GetSampleIndex(key)
-
 		if id then
 			if press then
 				if self:IsKeyDown(IN_SPEED) and self.Player == LocalPlayer() then
@@ -520,9 +389,8 @@ do -- hooks
 		--WHAT
 
 		local sampler = ply:GetSampler()
-
 		if sampler and sampler.OnKeyEvent and ply == sampler.Player then
-
+			
 			sampler.Keys[key] = press
 
 			return sampler:OnKeyEvent(key, press)
@@ -530,19 +398,23 @@ do -- hooks
 	end
 
 	function wowozela.Think()
-		for key, ply in pairs(player.GetAll()) do
-			local sampler = ply:GetSampler()
+		if #wowozela.Samples > 0 then
+			for key, ply in pairs(player.GetAll()) do
+				local sampler = ply:GetSampler()
 
-			if not sampler then sampler = wowozela.New(ply) end
+				if not sampler then sampler = wowozela.New(ply) end
 
-			if sampler and sampler.Think then
-				sampler:Think()
+				if sampler and sampler.Think then
+					sampler:Think()
+				end
 			end
 		end
 	end
 
 	hook.Add("Think", "wowozela_think", wowozela.Think)
 
+
+	
 	function wowozela.Draw()
 		for key, ply in pairs(player.GetAll()) do
 			local sampler = ply:GetSampler()
@@ -556,57 +428,69 @@ do -- hooks
 	hook.Add("PostDrawOpaqueRenderables", "wowozela_draw", wowozela.Draw)
 
 	function wowozela.BroadcastKeyEvent(ply, key, press, filter)
-		local rp = RecipientFilter()
-		rp:AddAllPlayers()
-		if not filter then
-			rp:RemovePlayer(ply)
-		end
-
-		umsg.Start("wowozela_keyevent", rp)
-			umsg.Entity(ply)
-			umsg.Long(key) -- or short?
-			umsg.Bool(press)
-		umsg.End()
+		net.Start("wowozela_key")
+			net.WriteEntity(ply)
+			net.WriteInt(key, 32)
+			net.WriteBool(press)
+		net.Broadcast() 
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
 		local wep = ply:GetActiveWeapon()
-		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
-			if SERVER then
-				wowozela.BroadcastKeyEvent(ply, key, true)
-				wep:OnKeyEvent(key, true)
-			end
+		if wep:IsValid() and wep:GetClass() == "wowozela" then
+			local wep = ply:GetActiveWeapon()
+			if wowozela.IsValidKey(key) then
+				if SERVER and wep.OnKeyEvent then
+					wowozela.BroadcastKeyEvent(ply, key, true)
+					wep:OnKeyEvent(key, true)
+				end
 
-			if CLIENT then
-				wowozela.KeyEvent(ply, key, true)
+				if CLIENT then
+					wowozela.KeyEvent(ply, key, true)
+				end
 			end
 		end
 	end)
 
 	hook.Add("KeyRelease", "wowozela_keyrelease", function(ply, key)
 		local wep = ply:GetActiveWeapon()
-		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
-			if SERVER then
-				wowozela.BroadcastKeyEvent(ply, key, false)
-				wep:OnKeyEvent(key, false)
-			end
+		if wep:IsValid() and wep:GetClass() == "wowozela" then
+			if wowozela.IsValidKey(key) then
+				if SERVER and wep.OnKeyEvent then
+					wowozela.BroadcastKeyEvent(ply, key, false)
+					wep:OnKeyEvent(key, false)
+				end
 
-			if CLIENT then
-				wowozela.KeyEvent(ply, key, false)
+				if CLIENT then
+					wowozela.KeyEvent(ply, key, false)
+				end
 			end
 		end
 	end)
 
 	if CLIENT then
-		usermessage.Hook("wowozela_keyevent", function(umr)
-			local ply = umr:ReadEntity()
-			local key = umr:ReadLong()
-			local press = umr:ReadBool()
-
-			if ply:IsPlayer() then
+		net.Receive("wowozela_key", function()
+			local ply = net.ReadEntity()
+			local key = net.ReadInt(32)
+			local press = net.ReadBool()
+			if IsValid(ply) and ply:IsPlayer() then
 				wowozela.KeyEvent(ply, key, press)
 			end
 		end)
-	end
+		
+		RunConsoleCommand("wowozela_request_samples")
+	else
+		hook.Add("PlayerInitialSpawn", "WowozelaPlayerJoined", function(ply)
+			net.Start("wowozela_update")
+				net.WriteTable(wowozela.Samples)
+			net.Send(ply)
+		end)
 
+
+		if #player.GetAll() > 0 then
+			net.Start("wowozela_update")
+				net.WriteTable(wowozela.Samples)
+			net.Broadcast()
+		end
+	end
 end
