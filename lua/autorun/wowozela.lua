@@ -210,7 +210,7 @@ do -- sample meta
 
 	function META:SetSample(i, path)
 		self.CSP[i] = CreateSound(self.Player, path or wowozela.DefaultSound)
-		self.CSP[i]:SetSoundLevel(65)
+		self.CSP[i]:SetSoundLevel(80)
 	end
 
 	function META:ChangeVolume(i, num)
