@@ -2,10 +2,8 @@
 .vscode/*
 *.txt
 *.md
-*.bat
-*.sh
 *.7z
 *.md
 *.yml
 COPYING
-_TEMP.gm
+_TEMP.gma
