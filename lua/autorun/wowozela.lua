@@ -20,6 +20,14 @@ wowozela.ValidKeys =
 	IN_USE
 }
 
+function wowozela.GetSampleIndex(sampleName)
+	for k,v in pairs(wowozela.Samples) do
+		if v[2] == sampleName then
+			return k
+		end
+	end
+end
+
 if SERVER then
 	for key, value in pairs(wowozela.ValidNotes) do
 		concommand.Add("wowozela_select_" .. key:lower(), function(ply, _, args)

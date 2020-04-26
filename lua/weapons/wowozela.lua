@@ -392,6 +392,7 @@ if CLIENT then
         end
         return tbl
     end
+
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon() 
         if IsValid(wep) and wep:GetClass() == "wowozela" then
@@ -404,20 +405,13 @@ if CLIENT then
                         local Menu = DermaMenu()
                         
                         for cat,snds in pairs(generateTable()) do
-    
                             local t = Menu:AddSubMenu(cat)
                             for _, snd in pairs(snds) do 
                                 t:AddOption(snd, function()
                                     wep.Wedges[selectionData.layout][selectionData[3]] = snd
                                     file.Write("wowozela.txt", util.TableToJSON(wep.Wedges, true))
-    
-                                    local noteIndex = nil
-                                    for k,v in pairs(wowozela.Samples) do
-                                        if v[2] == snd then
-                                            noteIndex = k
-                                        end
-                                    end
-    
+
+                                    local noteIndex = wowozela.GetSampleIndex(snd)
                                     if noteIndex then
                                         if selectionData[1] then
                                             RunConsoleCommand("wowozela_select_left", noteIndex)
@@ -448,45 +442,22 @@ if CLIENT then
                     return true
                 end
             elseif ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2) then
-
                 local num = tonumber(bind:match("slot(%d+)"))
                 if num and pressed then
                     if num == 0 then num = 10 end
-
-                    local noteIndex = nil
                     if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][num] then
-                        for k,v in pairs(wowozela.Samples) do
-                            if v[2] == wep.Wedges[wep.CurrentLayout][num] then
-                                noteIndex = k
+                        local noteIndex = wowozela.GetSampleIndex(wep.Wedges[wep.CurrentLayout][num])
+                        if noteIndex then
+                            if ply:KeyDown(IN_ATTACK) then
+                                RunConsoleCommand("wowozela_select_left", noteIndex)
+                                selectionIndex = nil
                             end
-                        end
-                    end
-
-                    if noteIndex then
-                        local sampler = ply:GetSampler() 
-                        if ply:KeyDown(IN_ATTACK) then
-                            RunConsoleCommand("wowozela_select_left", noteIndex)
-                            selectionIndex = nil
-
-                            if sampler then
-                                sampler:OnKeyEvent(IN_ATTACK, false)
-                                timer.Simple(0, function()
-                                    sampler:OnKeyEvent(IN_ATTACK, true)
-                                end)
-                            end
-                        end
-            
-                        if ply:KeyDown(IN_ATTACK2) then
-                            RunConsoleCommand("wowozela_select_right", noteIndex)
-                            selectionIndex = nil
-
-                            if sampler then
-                                sampler:OnKeyEvent(IN_ATTACK2, false)
-                                timer.Simple(0, function()
-                                    sampler:OnKeyEvent(IN_ATTACK2, true)
-                                end)
-                            end
-                        end 
+                
+                            if ply:KeyDown(IN_ATTACK2) then
+                                RunConsoleCommand("wowozela_select_right", noteIndex)
+                                selectionIndex = nil
+                            end 
+                        end  
                     end
                     return true
                 end
@@ -499,29 +470,20 @@ if CLIENT then
         if IsValid(wep) and wep:GetClass() == "wowozela" and selectionIndex then
             local isLeft, isRight, noteWedgeIndex = unpack(selectionIndex)
 
-
-            local noteIndex = nil
             if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][noteWedgeIndex] then
-                for k,v in pairs(wowozela.Samples) do
-                    if v[2] == wep.Wedges[wep.CurrentLayout][noteWedgeIndex] then
-                        noteIndex = k
+                local noteIndex = wowozela.GetSampleIndex(wep.Wedges[wep.CurrentLayout][noteWedgeIndex])
+                if noteIndex then
+                    if isLeft and key == IN_ATTACK then
+                        RunConsoleCommand("wowozela_select_left", noteIndex)
+                        selectionIndex = nil
+                    end
+        
+                    if isRight and key == IN_ATTACK2 then
+                        RunConsoleCommand("wowozela_select_right", noteIndex)
+                        selectionIndex = nil
                     end
                 end
             end
-
-
-            if noteIndex then
-                if isLeft and key == IN_ATTACK then
-                    RunConsoleCommand("wowozela_select_left", noteIndex)
-                    selectionIndex = nil
-                end
-    
-                if isRight and key == IN_ATTACK2 then
-                    RunConsoleCommand("wowozela_select_right", noteIndex)
-                    selectionIndex = nil
-                end
-            end
-            
         end
     end)
 end
