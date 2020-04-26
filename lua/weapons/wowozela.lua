@@ -70,6 +70,8 @@ function SWEP:Initialize()
         self:SetWeaponHoldType("normal")
     end
     
+
+    self.CurrentLayout = 1
     self:SetNoteLeft(1)
     self:SetNoteRight(1)
 end
@@ -94,6 +96,7 @@ function SWEP:Holster()
 end
 
 function SWEP:OnKeyEvent(key, press)
+
 end
 
 function SWEP:_Think()
@@ -110,6 +113,12 @@ function SWEP:GetViewModelPosition(pos, ang)
 
     return pos, ang
 end
+
+hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
+    if IsValid(wep) and wep:GetClass() == "wowozela" and ply:KeyDown(IN_RELOAD) then
+        return true
+    end
+end)
 
 if CLIENT then
     local size = 80
@@ -128,7 +137,7 @@ if CLIENT then
         "WowozelaFont2",
         {
             font		= "Roboto Bk",
-            size		= 35,
+            size		= 17,
             weight		= 1000,
         }
     )
@@ -152,104 +161,366 @@ if CLIENT then
         end
         return 1
     end
-
-    function SWEP:DrawHUD()
-
-        if not self.xPos or not self.xPos2 then
-            self.xPos = -PanelWidth/2
-            self.xPos2 = -PanelWidth/2
+    
+    local selectionIndex = nil
+    local wason = false
+    local function testDist(x, y, x2, y2)
+        return math.pow(y2 - y, 2) + math.pow(x2 - x, 2)
+    end
+    
+    function surface.DrawWedge(centerX, centerY, innerRadius, outerRadius, startAng, endAng, numText, nameText)
+        local cir = {}
+        
+        local a = math.rad( startAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local a = math.rad( startAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local a = math.rad( endAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+    
+        local a = math.rad( endAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local centerAng = (endAng + startAng) / 2
+        local a = math.rad( centerAng )
+        surface.SetTexture(0)
+        surface.DrawPoly(cir)
+        local rad = ((outerRadius + innerRadius)/2 - 7)
+    
+        draw.Text( {
+            text = numText,
+            pos = { centerX + math.sin( a ) * rad, centerY + math.cos( a ) * rad},
+            xalign = TEXT_ALIGN_CENTER,
+            yalign = TEXT_ALIGN_CENTER
+        } )
+    
+    
+        local align = TEXT_ALIGN_CENTER
+    
+    
+    
+        if centerAng > 15 and centerAng < 165 then
+            align = TEXT_ALIGN_LEFT
+        elseif centerAng > 195 and centerAng < 345 then
+            align = TEXT_ALIGN_RIGHT
         end
-
-        local left = self.Owner:KeyDown(IN_ATTACK) or input.IsMouseDown(MOUSE_LEFT)
-        local right = self.Owner:KeyDown(IN_ATTACK2) or input.IsMouseDown(MOUSE_RIGHT)
-        
-
-        
-        local names = wowozela.Samples
-        local edge = 2
-        local PanelHeight = maxheight * 2 + 10
-        local PanelX = ScrW()/2 - PanelWidth/2
-        local PanelY = ScrH() - PanelHeight
-        local total = (wowozela and wowozela.Samples) and #wowozela.Samples or 0
-        surface.SetFont("WowozelaFont2")
-        if not size_diag or maxheight == 0 then
-            size_diag = space
-            for I = 1, total do
-                
-                local width, height = surface.GetTextSize(names[I][2])
-                indexs[I] = {size_diag, size_diag + space + width}
-                size_diag = size_diag + space + width
-                if height > maxheight then
-                    maxheight = height
-                end
-
-            end
-            self.xPos = -PanelWidth/2
-            self.xPos2 = -PanelWidth/2
-        end
-
-        
-        
-        surface.SetDrawColor(Color(150, 150, 150))
-        
-        draw.RoundedBoxEx(16, PanelX - edge, PanelY - edge, PanelWidth + edge*2, PanelHeight + edge*2, Color(50, 50, 50), true, true)
-        draw.RoundedBoxEx(16, PanelX, PanelY, PanelWidth, PanelHeight, Color(100, 100, 100), true, true)
-        local offsetX = 0
-        for I=1, #names do
-            local option = names[I][2]
-            local width, height = surface.GetTextSize(option)
-            
-            render.SetScissorRect(PanelX, PanelY, PanelX + PanelWidth, PanelY + PanelHeight, true)
-
-            local col1 = Color( 75, 75, 75, 255 )
-            local col2 = Color( 75, 75, 75, 255 )
-            if I == PosToIndex(self.xPos + PanelWidth/2) then
-                col1 = Color( 150, 50, 50, 255 )
-            end
-            if I == PosToIndex(self.xPos2 + PanelWidth/2) then
-                col2 = Color( 150, 50, 50, 255 )
-            end
-            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - self.xPos, PanelY, col1, TEXT_ALIGN_LEFT )
-            draw.DrawText(option, "WowozelaFont2", PanelX + offsetX - self.xPos2, PanelY + maxheight, col2, TEXT_ALIGN_LEFT )
-            render.SetScissorRect(PanelX, PanelY, PanelX + PanelWidth, PanelY + PanelHeight, false)
-            offsetX = offsetX + width + space
-        end
-
-        if self.Owner:KeyDown(IN_RELOAD) then
-            if not wason then
-                gui.EnableScreenClicker(true)
-                wason = true
-            end
-            local mouseX, mouseY = gui.MousePos()
-            local movePos = ((ScrW()/2 - mouseX) / (ScrW()/2)) * -32
-            if left then
-                self.xPos = math.Clamp(self.xPos + movePos, -PanelWidth/2, size_diag-PanelWidth/2)
-            elseif right then
-                self.xPos2 = math.Clamp(self.xPos2 + movePos, -PanelWidth/2, size_diag-PanelWidth/2)  
-            end
-        else
-            if(wason) then
-                gui.EnableScreenClicker(false)
-                wason = false
-            end
-        end
+    
+    
+    
+        draw.Text( {
+            text = nameText,
+            pos = { centerX + math.sin( a ) * outerRadius * 1.05, centerY + math.cos( a ) * outerRadius * 1.05 },
+            xalign = align,
+            yalign = TEXT_ALIGN_CENTER,
+            font = "WowozelaFont2"
+        } )
     end
 
 
+    function SWEP:LoadWedges()
+        self.Wedges = {}
+        for I=1,10 do table.insert(self.Wedges, {}) end
+
+        if file.Exists("wowozela.txt", "DATA") then
+            self.Wedges = util.JSONToTable(file.Read("wowozela.txt", "DATA"))
+        end
+    end
+
+    function SWEP:HUDShouldDraw(element)
+        if self.Owner:KeyDown(IN_RELOAD) and element == "CHudCrosshair" then
+            return false
+        end
+        return true
+    end
+
+    function SWEP:DrawHUD()
+        if not self.Wedges then
+            self:LoadWedges()
+            return
+        end
+        
+        if not self.Wedges[self.CurrentLayout] then 
+            self.Wedges[self.CurrentLayout] = {}
+        end
+
+
+        local mouseX, mouseY = gui.MouseX(), gui.MouseY()
+        
+
+        local function drawCircle( x, y, radius, seg )
+            local cir = {}
+        
+            table.insert( cir, { x = x, y = y, u = 0.5, v = 0.5 } )
+            for i = 0, seg do
+                local a = math.rad( ( i / seg ) * -360 )
+                table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+            end
+        
+            local a = math.rad( 0 ) -- This is needed for non absolute segment counts
+            table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+            surface.DrawPoly( cir )
+        end
+
+
+        if self.Owner:KeyDown(IN_RELOAD) then
+            
+            local editing = self.Owner:KeyDown(IN_ATTACK) or self.Owner:KeyDown(IN_ATTACK2)
+
+            local ang = math.atan2(mouseY - ScrH()/2, ScrW()/2 - mouseX)
+            local ang2 = (math.deg(ang) - 90) % 360
+            local wedgeSize = (36)
+            local wedge2 = wedgeSize
+
+            local hoverWedge = nil
+
+
+            local farEnough = testDist(ScrW()/2, ScrH()/2, mouseX, mouseY) > 36 * 36
+
+            surface.SetDrawColor(Color(100, 100, 100, 75))
+            drawCircle(ScrW()/2, ScrH()/2, 36, 10)
+
+            draw.Text( {
+                text = tostring(self.CurrentLayout == 10 and 0 or self.CurrentLayout),
+                pos = { ScrW()/2, ScrH()/2 },
+                xalign = TEXT_ALIGN_CENTER,
+                yalign = TEXT_ALIGN_CENTER,
+                font = "WowozelaFont2",
+                color = Color(255, 255, 255, 255)
+            } )
+
+
+            for I=1, (360/wedgeSize) do
+                local wedgeAng = ((I - 1) * wedgeSize)
+                local col = HSVToColor(wedgeAng, 1, 0.75)
+                col.a = 150
+                
+                if editing then 
+                    if ang2 >= (wedgeAng) and ang2 <= (wedgeAng + wedge2) and farEnough then
+                        hoverWedge = I
+                        col = HSVToColor(wedgeAng, 1, 0.5)
+                        col.a = 150
+                    end
+                end
+
+                surface.SetDrawColor(col)
+                surface.DrawWedge(ScrW()/2, ScrH()/2, 130, 150, wedgeAng, wedgeAng + wedge2, string.format("%d", I == 10 and 0 or I), ("%s"):format(self.Wedges[self.CurrentLayout][I] or "(unassigned)"))
+
+                col.a = 50
+                surface.SetDrawColor(col)
+                surface.DrawWedge(ScrW()/2, ScrH()/2, 36, 130, wedgeAng, wedgeAng + wedge2, "", "")
+            end
+            
+            if editing then
+                if not wason then
+                    gui.EnableScreenClicker(true)
+                    wason = true
+                end
+
+                if hoverWedge and farEnough then
+                    selectionIndex = {self.Owner:KeyDown(IN_ATTACK), self.Owner:KeyDown(IN_ATTACK2), hoverWedge, self.Wedges[self.CurrentLayout][hoverWedge]}
+                else
+                    selectionIndex = nil
+                end
+            elseif wason then
+                gui.EnableScreenClicker(false)
+                wason = false
+            end
+        elseif wason then
+            gui.EnableScreenClicker(false)
+            wason = false
+        end
+    end
+
+	wowozela.sampleSort = {
+		["bass"] = "Instrumental",
+		["bass3"] = "Instrumental",
+		["bassguitar2"] = "Instrumental",
+		["bell"] = "Instrumental",
+		["coolchiff"] = "Instrumental",
+		["crackpiano"] = "Instrumental",
+		["dingdong"] = "Instrumental",
+		["dooooooooh"] = "Vocal",
+		["dusktodawn"] = "Synth",
+		["flute"] = "Instrumental",
+		["fmbass"] = "Instrumental",
+		["fuzz"] = "Instrumental",
+		["guitar"] = "Instrumental",
+		["hit"] = "Instrumental",
+		["honkytonk"] = "Synth",
+		["horn"] = "Misc",
+		["justice"] = "Synth",
+		["littleflower"] = "Instrumental",
+		["meow"] = "Misc",
+		["miku"] = "Vocal",
+		["mmm"] = "Vocal",
+		["oohh"] = "Vocal",
+		["overdrive"] = "Misc",
+		["pianostab"] = "Instrumental",
+		["prima"] = "Vocal",
+		["quack"] = "Misc",
+		["saw_880"] = "Synth",
+		["sine_880"] = "Synth",
+		["skull"] = "Instrumental",
+		["slap"] = "Synth",
+		["square_880"] = "Synth",
+		["string"] = "Instrumental",
+		["toypiano"] = "Instrumental",
+		["triangle_880"] = "Synth",
+		["trumpet"] = "Instrumental",
+		["woof"] = "Misc"
+    }
+    
+    local function generateTable()
+        local tbl = {}
+        for k,v in pairs(wowozela.Samples) do
+            local t = wowozela.sampleSort[v[2]]
+            if t then
+                if not tbl[t] then
+                    tbl[t] = {}
+                end
+                table.insert(tbl[t], v[2])
+            else
+                if not tbl.Custom then
+                    tbl.Custom = {}
+                end
+                table.insert(tbl.Custom, v[2])
+            end
+        end
+        return tbl
+    end
+    hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
+        local wep = ply:GetActiveWeapon() 
+        if IsValid(wep) and wep:GetClass() == "wowozela" then
+            if ply:KeyDown(IN_RELOAD) then 
+                if bind == "+menu" and pressed then
+                    if selectionIndex and wep.CurrentLayout then
+                        local selectionData = table.Copy(selectionIndex)
+    
+                        selectionData.layout = wep.CurrentLayout 
+                        local Menu = DermaMenu()
+                        
+                        for cat,snds in pairs(generateTable()) do
+    
+                            local t = Menu:AddSubMenu(cat)
+                            for _, snd in pairs(snds) do 
+                                t:AddOption(snd, function()
+                                    wep.Wedges[selectionData.layout][selectionData[3]] = snd
+                                    file.Write("wowozela.txt", util.TableToJSON(wep.Wedges, true))
+    
+                                    local noteIndex = nil
+                                    for k,v in pairs(wowozela.Samples) do
+                                        if v[2] == snd then
+                                            noteIndex = k
+                                        end
+                                    end
+    
+                                    if noteIndex then
+                                        if selectionData[1] then
+                                            RunConsoleCommand("wowozela_select_left", noteIndex)
+                                            selectionIndex = nil
+                                        end
+                            
+                                        if selectionData[2] then
+                                            RunConsoleCommand("wowozela_select_right", noteIndex)
+                                            selectionIndex = nil
+                                        end
+                                    end
+                                end)
+                            end
+                        end
+                        Menu:Open()
+                    end
+                    return true
+                end
+    
+                local num = tonumber(bind:match("slot(%d+)"))
+                if num and pressed then
+                    if num == 0 then num = 10 end
+
+                    if wep.Wedges[num] then
+                        
+                        wep.CurrentLayout = num
+                    end
+                    return true
+                end
+            elseif ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2) then
+
+                local num = tonumber(bind:match("slot(%d+)"))
+                if num and pressed then
+                    if num == 0 then num = 10 end
+
+                    local noteIndex = nil
+                    if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][num] then
+                        for k,v in pairs(wowozela.Samples) do
+                            if v[2] == wep.Wedges[wep.CurrentLayout][num] then
+                                noteIndex = k
+                            end
+                        end
+                    end
+
+                    if noteIndex then
+                        local sampler = ply:GetSampler() 
+                        if ply:KeyDown(IN_ATTACK) then
+                            RunConsoleCommand("wowozela_select_left", noteIndex)
+                            selectionIndex = nil
+
+                            if sampler then
+                                sampler:OnKeyEvent(IN_ATTACK, false)
+                                timer.Simple(0, function()
+                                    sampler:OnKeyEvent(IN_ATTACK, true)
+                                end)
+                            end
+                        end
+            
+                        if ply:KeyDown(IN_ATTACK2) then
+                            RunConsoleCommand("wowozela_select_right", noteIndex)
+                            selectionIndex = nil
+
+                            if sampler then
+                                sampler:OnKeyEvent(IN_ATTACK2, false)
+                                timer.Simple(0, function()
+                                    sampler:OnKeyEvent(IN_ATTACK2, true)
+                                end)
+                            end
+                        end 
+                    end
+                    return true
+                end
+            end 
+        end
+    end)
+
     hook.Add("KeyRelease", "WowozelaFinalizeSelection", function(ply, key)
         local wep = ply:GetActiveWeapon() 
-        if key == IN_RELOAD and PanelWidth and IsValid(wep) and wep:GetClass() == "wowozela" then
-            local index = PosToIndex((wep.xPos or 0) + PanelWidth/2) 
-            if index ~= selection1 then
-                selection1 = index
-                RunConsoleCommand("wowozela_select_left", index)
+        if IsValid(wep) and wep:GetClass() == "wowozela" and selectionIndex then
+            local isLeft, isRight, noteWedgeIndex = unpack(selectionIndex)
+
+
+            local noteIndex = nil
+            if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][noteWedgeIndex] then
+                for k,v in pairs(wowozela.Samples) do
+                    if v[2] == wep.Wedges[wep.CurrentLayout][noteWedgeIndex] then
+                        noteIndex = k
+                    end
+                end
             end
 
-            local index2 = PosToIndex((wep.xPos2 or 0) + PanelWidth/2) 
-            if index2 ~= selection2 then
-                selection2 = index2
-                RunConsoleCommand("wowozela_select_right", index2)
+
+            if noteIndex then
+                if isLeft and key == IN_ATTACK then
+                    RunConsoleCommand("wowozela_select_left", noteIndex)
+                    selectionIndex = nil
+                end
+    
+                if isRight and key == IN_ATTACK2 then
+                    RunConsoleCommand("wowozela_select_right", noteIndex)
+                    selectionIndex = nil
+                end
             end
+            
         end
     end)
 end

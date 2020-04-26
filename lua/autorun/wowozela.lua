@@ -456,9 +456,9 @@ do -- hooks
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
 		if not IsFirstTimePredicted() then return end
 		
+		
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" then
-			local wep = ply:GetActiveWeapon()
 			if wowozela.IsValidKey(key) then
 				if SERVER and wep.OnKeyEvent then
 					wowozela.BroadcastKeyEvent(ply, key, true)
