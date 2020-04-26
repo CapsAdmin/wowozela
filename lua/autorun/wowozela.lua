@@ -524,3 +524,49 @@ do -- hooks
 		end
 	end
 end
+
+
+wowozela.sampleSort = {
+	["bass"] = "Instrumental",
+	["bass3"] = "Instrumental",
+	["bassguitar2"] = "Instrumental",
+	["bell"] = "Instrumental",
+	["coolchiff"] = "Instrumental",
+	["crackpiano"] = "Instrumental",
+	["dingdong"] = "Instrumental",
+	["dooooooooh"] = "Vocal",
+	["dusktodawn"] = "Synth",
+	["flute"] = "Instrumental",
+	["fmbass"] = "Instrumental",
+	["fuzz"] = "Instrumental",
+	["guitar"] = "Instrumental",
+	["hit"] = "Instrumental",
+	["honkytonk"] = "Instrumental",
+	["horn"] = "Misc",
+	["justice"] = "Instrumental",
+	["littleflower"] = "Instrumental",
+	["meow"] = "Misc",
+	["miku"] = "Vocal",
+	["mmm"] = "Vocal",
+	["oohh"] = "Vocal",
+	["overdrive"] = "Misc",
+	["pianostab"] = "Instrumental",
+	["prima"] = "Vocal",
+	["quack"] = "Misc",
+	["saw_880"] = "Synth",
+	["sine_880"] = "Synth",
+	["skull"] = "Instrumental",
+	["slap"] = "Instrumental",
+	["square_880"] = "Synth",
+	["string"] = "Instrumental",
+	["toypiano"] = "Instrumental",
+	["triangle_880"] = "Synth",
+	["trumpet"] = "Instrumental",
+	["woof"] = "Misc"
+}
+
+wowozela.sampleSortIcons = {
+	["Instrumental"] = "icon16/bell.png",
+	["Synth"] = "icon16/computer.png",
+	["Vocal"] = "icon16/music.png",
+}

@@ -335,62 +335,31 @@ if CLIENT then
         end
     end
 
-	wowozela.sampleSort = {
-		["bass"] = "Instrumental",
-		["bass3"] = "Instrumental",
-		["bassguitar2"] = "Instrumental",
-		["bell"] = "Instrumental",
-		["coolchiff"] = "Instrumental",
-		["crackpiano"] = "Instrumental",
-		["dingdong"] = "Instrumental",
-		["dooooooooh"] = "Vocal",
-		["dusktodawn"] = "Synth",
-		["flute"] = "Instrumental",
-		["fmbass"] = "Instrumental",
-		["fuzz"] = "Instrumental",
-		["guitar"] = "Instrumental",
-		["hit"] = "Instrumental",
-		["honkytonk"] = "Synth",
-		["horn"] = "Misc",
-		["justice"] = "Synth",
-		["littleflower"] = "Instrumental",
-		["meow"] = "Misc",
-		["miku"] = "Vocal",
-		["mmm"] = "Vocal",
-		["oohh"] = "Vocal",
-		["overdrive"] = "Misc",
-		["pianostab"] = "Instrumental",
-		["prima"] = "Vocal",
-		["quack"] = "Misc",
-		["saw_880"] = "Synth",
-		["sine_880"] = "Synth",
-		["skull"] = "Instrumental",
-		["slap"] = "Synth",
-		["square_880"] = "Synth",
-		["string"] = "Instrumental",
-		["toypiano"] = "Instrumental",
-		["triangle_880"] = "Synth",
-		["trumpet"] = "Instrumental",
-		["woof"] = "Misc"
-    }
-    
     local function generateTable()
-        local tbl = {}
+        local tbl, tbl2 = {}, {}
         for k,v in pairs(wowozela.Samples) do
             local t = wowozela.sampleSort[v[2]]
             if t then
                 if not tbl[t] then
                     tbl[t] = {}
+                    table.insert(tbl2, t)
                 end
                 table.insert(tbl[t], v[2])
+
+                table.sort(tbl[t])
             else
                 if not tbl.Custom then
                     tbl.Custom = {}
+                    table.insert(tbl2, "Custom")
                 end
                 table.insert(tbl.Custom, v[2])
+
+                table.sort(tbl.Custom)
             end
         end
-        return tbl
+
+        table.sort(tbl2)
+        return tbl, tbl2
     end
 
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
@@ -399,13 +368,22 @@ if CLIENT then
             if ply:KeyDown(IN_RELOAD) then 
                 if bind == "+menu" and pressed then
                     if selectionIndex and wep.CurrentLayout then
+                        local tbl, tbl2 = generateTable()
                         local selectionData = table.Copy(selectionIndex)
     
                         selectionData.layout = wep.CurrentLayout 
                         local Menu = DermaMenu()
                         
-                        for cat,snds in pairs(generateTable()) do
-                            local t = Menu:AddSubMenu(cat)
+                        
+                        for _, cat in pairs(tbl2) do
+                            local snds = tbl[cat]
+
+                            local t, t2 = Menu:AddSubMenu(cat)
+
+                            if wowozela.sampleSortIcons[cat] then
+                                t2:SetIcon(wowozela.sampleSortIcons[cat])
+                            end
+
                             for _, snd in pairs(snds) do 
                                 t:AddOption(snd, function()
                                     wep.Wedges[selectionData.layout][selectionData[3]] = snd
