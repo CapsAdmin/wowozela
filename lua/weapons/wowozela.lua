@@ -115,7 +115,7 @@ function SWEP:GetViewModelPosition(pos, ang)
 end
 
 hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
-    if IsValid(wep) and wep:GetClass() == "wowozela" and ply:KeyDown(IN_RELOAD) then
+    if IsValid(wep) and wep:GetClass() == "wowozela" and (ply:KeyDown(IN_RELOAD) or ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2)) then
         return true
     end
 end)
@@ -167,57 +167,6 @@ if CLIENT then
     local function testDist(x, y, x2, y2)
         return math.pow(y2 - y, 2) + math.pow(x2 - x, 2)
     end
-    
-    function surface.DrawWedge(centerX, centerY, innerRadius, outerRadius, startAng, endAng, numText, nameText)
-        local cir = {}
-        
-        local a = math.rad( startAng )
-        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-        
-        local a = math.rad( startAng )
-        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-        
-        local a = math.rad( endAng )
-        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-    
-        local a = math.rad( endAng )
-        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-        
-        local centerAng = (endAng + startAng) / 2
-        local a = math.rad( centerAng )
-        surface.SetTexture(0)
-        surface.DrawPoly(cir)
-        local rad = ((outerRadius + innerRadius)/2 - 7)
-    
-        draw.Text( {
-            text = numText,
-            pos = { centerX + math.sin( a ) * rad, centerY + math.cos( a ) * rad},
-            xalign = TEXT_ALIGN_CENTER,
-            yalign = TEXT_ALIGN_CENTER
-        } )
-    
-    
-        local align = TEXT_ALIGN_CENTER
-    
-    
-    
-        if centerAng > 15 and centerAng < 165 then
-            align = TEXT_ALIGN_LEFT
-        elseif centerAng > 195 and centerAng < 345 then
-            align = TEXT_ALIGN_RIGHT
-        end
-    
-    
-    
-        draw.Text( {
-            text = nameText,
-            pos = { centerX + math.sin( a ) * outerRadius * 1.05, centerY + math.cos( a ) * outerRadius * 1.05 },
-            xalign = align,
-            yalign = TEXT_ALIGN_CENTER,
-            font = "WowozelaFont2"
-        } )
-    end
-
 
     function SWEP:LoadWedges()
         self.Wedges = {}
@@ -245,10 +194,8 @@ if CLIENT then
             self.Wedges[self.CurrentLayout] = {}
         end
 
-
         local mouseX, mouseY = gui.MouseX(), gui.MouseY()
         
-
         local function drawCircle( x, y, radius, seg )
             local cir = {}
         
@@ -264,19 +211,14 @@ if CLIENT then
             surface.DrawPoly( cir )
         end
 
-
         if self.Owner:KeyDown(IN_RELOAD) then
             
             local editing = self.Owner:KeyDown(IN_ATTACK) or self.Owner:KeyDown(IN_ATTACK2)
-
             local ang = math.atan2(mouseY - ScrH()/2, ScrW()/2 - mouseX)
             local ang2 = (math.deg(ang) - 90) % 360
             local wedgeSize = (36)
             local wedge2 = wedgeSize
-
             local hoverWedge = nil
-
-
             local farEnough = testDist(ScrW()/2, ScrH()/2, mouseX, mouseY) > 36 * 36
 
             draw.NoTexture()
@@ -291,7 +233,6 @@ if CLIENT then
                 font = "WowozelaFont2",
                 color = Color(255, 255, 255, 255)
             } )
-
 
             for I=1, (360/wedgeSize) do
                 local wedgeAng = ((I - 1) * wedgeSize)
@@ -370,16 +311,13 @@ if CLIENT then
                     if selectionIndex and wep.CurrentLayout then
                         local tbl, tbl2 = generateTable()
                         local selectionData = table.Copy(selectionIndex)
-    
                         selectionData.layout = wep.CurrentLayout 
+
                         local Menu = DermaMenu()
-                        
-                        
                         for _, cat in pairs(tbl2) do
                             local snds = tbl[cat]
 
                             local t, t2 = Menu:AddSubMenu(cat)
-
                             if wowozela.sampleSortIcons[cat] then
                                 t2:SetIcon(wowozela.sampleSortIcons[cat])
                             end
@@ -390,16 +328,8 @@ if CLIENT then
                                     file.Write("wowozela.txt", util.TableToJSON(wep.Wedges, true))
 
                                     local noteIndex = wowozela.GetSampleIndex(snd)
-                                    if noteIndex then
-                                        if selectionData[1] then
-                                            RunConsoleCommand("wowozela_select_left", noteIndex)
-                                            selectionIndex = nil
-                                        end
-                            
-                                        if selectionData[2] then
-                                            RunConsoleCommand("wowozela_select_right", noteIndex)
-                                            selectionIndex = nil
-                                        end
+                                    if noteIndex and wowozela.SetSampleIndex(selectionData[1], selectionData[2], noteIndex) then
+                                        selectionIndex = nil
                                     end
                                 end)
                             end
@@ -425,17 +355,9 @@ if CLIENT then
                     if num == 0 then num = 10 end
                     if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][num] then
                         local noteIndex = wowozela.GetSampleIndex(wep.Wedges[wep.CurrentLayout][num])
-                        if noteIndex then
-                            if ply:KeyDown(IN_ATTACK) then
-                                RunConsoleCommand("wowozela_select_left", noteIndex)
-                                selectionIndex = nil
-                            end
-                
-                            if ply:KeyDown(IN_ATTACK2) then
-                                RunConsoleCommand("wowozela_select_right", noteIndex)
-                                selectionIndex = nil
-                            end 
-                        end  
+                        if noteIndex and wowozela.SetSampleIndex(ply:KeyDown(IN_ATTACK), ply:KeyDown(IN_ATTACK2), noteIndex) then
+                            selectionIndex = nil
+                        end
                     end
                     return true
                 end
@@ -450,16 +372,8 @@ if CLIENT then
 
             if wep.Wedges and wep.CurrentLayout and wep.Wedges[wep.CurrentLayout] and wep.Wedges[wep.CurrentLayout][noteWedgeIndex] then
                 local noteIndex = wowozela.GetSampleIndex(wep.Wedges[wep.CurrentLayout][noteWedgeIndex])
-                if noteIndex then
-                    if isLeft and key == IN_ATTACK then
-                        RunConsoleCommand("wowozela_select_left", noteIndex)
-                        selectionIndex = nil
-                    end
-        
-                    if isRight and key == IN_ATTACK2 then
-                        RunConsoleCommand("wowozela_select_right", noteIndex)
-                        selectionIndex = nil
-                    end
+                if noteIndex and wowozela.SetSampleIndex(isLeft and key == IN_ATTACK, isRight and key == IN_ATTACK2, noteIndex) then
+                    selectionIndex = nil
                 end
             end
         end

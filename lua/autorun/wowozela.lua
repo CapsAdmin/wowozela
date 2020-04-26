@@ -3,6 +3,68 @@ if not wowozela then wowozela = {} end
 
 if CLIENT then
 	wowozela.volume = CreateClientConVar("wowozela_volume","0.5",true,false)
+
+    function surface.DrawWedge(centerX, centerY, innerRadius, outerRadius, startAng, endAng, numText, nameText)
+        local cir = {}
+        
+        local a = math.rad( startAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local a = math.rad( startAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local a = math.rad( endAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+    
+        local a = math.rad( endAng )
+        table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        
+        local centerAng = (endAng + startAng) / 2
+        local a = math.rad( centerAng )
+        surface.SetTexture(0)
+        surface.DrawPoly(cir)
+        local rad = ((outerRadius + innerRadius)/2 - 7)
+    
+        draw.Text( {
+            text = numText,
+            pos = { centerX + math.sin( a ) * rad, centerY + math.cos( a ) * rad},
+            xalign = TEXT_ALIGN_CENTER,
+            yalign = TEXT_ALIGN_CENTER
+        } )
+
+        local align = TEXT_ALIGN_CENTER
+
+        if centerAng > 15 and centerAng < 165 then
+            align = TEXT_ALIGN_LEFT
+        elseif centerAng > 195 and centerAng < 345 then
+            align = TEXT_ALIGN_RIGHT
+        end
+
+        draw.Text( {
+            text = nameText,
+            pos = { centerX + math.sin( a ) * outerRadius * 1.05, centerY + math.cos( a ) * outerRadius * 1.05 },
+            xalign = align,
+            yalign = TEXT_ALIGN_CENTER,
+            font = "WowozelaFont2"
+        } )
+	end
+	
+	
+	function wowozela.SetSampleIndex(isLeft, isRight, noteIndex)
+		local done = false
+		if isLeft then
+			RunConsoleCommand("wowozela_select_left", noteIndex)
+			done = true
+		end
+
+		if isRight then
+			RunConsoleCommand("wowozela_select_right", noteIndex)
+			done = true
+		end
+
+		return done
+	end
+
 end
 
 wowozela.ValidNotes =
@@ -27,6 +89,7 @@ function wowozela.GetSampleIndex(sampleName)
 		end
 	end
 end
+
 
 if SERVER then
 	for key, value in pairs(wowozela.ValidNotes) do
