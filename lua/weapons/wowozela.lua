@@ -279,6 +279,7 @@ if CLIENT then
 
             local farEnough = testDist(ScrW()/2, ScrH()/2, mouseX, mouseY) > 36 * 36
 
+            draw.NoTexture()
             surface.SetDrawColor(Color(100, 100, 100, 75))
             drawCircle(ScrW()/2, ScrH()/2, 36, 10)
 
