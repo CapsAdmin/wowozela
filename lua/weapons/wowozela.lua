@@ -145,7 +145,7 @@ if CLIENT then
     local PanelWidth = ScrW() * 0.75
     local function PosToIndex(posX)
         --local posX = size_diag - posX
-        for k,v in pairs(indexs) do
+        for k,v in ipairs(indexs) do
             if posX > v[1] and posX <= v[2] then
                 return k
             end 
