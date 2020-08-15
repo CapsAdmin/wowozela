@@ -21,7 +21,7 @@ wowozela.ValidKeys =
 }
 
 if SERVER then
-	for key, value in pairs(wowozela.ValidNotes) do
+	for key, value in ipairs(wowozela.ValidNotes) do
 		concommand.Add("wowozela_select_" .. key:lower(), function(ply, _, args)
 			local wep = ply:GetActiveWeapon()
 			if wep:IsValid() and wep:GetClass() == "wowozela" then
@@ -75,7 +75,7 @@ if SERVER then
 		["woof.wav"] = true
 	}
 
-	for _, file_name in pairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
+	for _, file_name in ipairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
 		
 		table.insert(wowozela.Samples, {"wowozela/samples/" .. file_name, file_name:match("(.+)%.wav")})
 		
@@ -129,7 +129,7 @@ function wowozela.IsValidKey(key)
 end
 
 function wowozela.IsValidNote(key)
-	for k,v in pairs(wowozela.ValidNotes) do
+	for k, v in ipairs(wowozela.ValidNotes) do
 		if v == key then
 			return k 
 		end
@@ -147,7 +147,7 @@ do -- sample meta
 	function META:Initialize(ply)
 		self.Player = ply
 
-		for i, path in pairs(wowozela.Samples) do
+		for i, path in ipairs(wowozela.Samples) do
 			self:SetSample(i, path[1])
 		end
 
@@ -199,7 +199,7 @@ do -- sample meta
 	end
 
 	function META:IsPlaying() -- hm
-		for _, on in pairs(self.Keys) do
+		for _, on in ipairs(self.Keys) do
 			if on then
 				return true
 			end
@@ -234,7 +234,7 @@ do -- sample meta
 		
 		self.Pitch = math.Clamp(math.floor(100 * 2 ^ num), 1, 255)
 
-		for i in pairs(wowozela.Samples) do
+		for i in ipairs(wowozela.Samples) do
 			self:ChangePitch(i, self.Pitch)
 		end
 	end
@@ -242,7 +242,7 @@ do -- sample meta
 	function META:SetVolume(num)
 		self.Volume = math.Clamp(num or self.Volume, 0.0001, 1)
 
-		for i in pairs(wowozela.Samples) do
+		for i in ipairs(wowozela.Samples) do
 			self:ChangeVolume(i, self.Volume)
 		end
 	end
@@ -311,7 +311,7 @@ do -- sample meta
 
 	function META:Think()
 		if not self:CanPlay() then
-			for _, csp in pairs(self.CSP) do 
+			for _, csp in ipairs(self.CSP) do 
 				csp:Stop()
 			end
 			return
@@ -413,7 +413,7 @@ do -- hooks
 
 
 		if #wowozela.Samples > 0 then
-			for key, ply in pairs(player.GetAll()) do
+			for key, ply in ipairs(player.GetAll()) do
 				local sampler = ply:GetSampler()
 
 				if not sampler then sampler = wowozela.New(ply) end
@@ -430,7 +430,7 @@ do -- hooks
 
 	
 	function wowozela.Draw()
-		for key, ply in pairs(player.GetAll()) do
+		for key, ply in ipairs(player.GetAll()) do
 			local sampler = ply:GetSampler()
 
 			if sampler and sampler.Draw then
