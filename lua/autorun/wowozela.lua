@@ -104,6 +104,7 @@ if SERVER then
 					net.Start("wowozela_sample")
 						net.WriteEntity(ply)
 						net.WriteInt(value, 32)
+						net.WriteInt(val, 32)
 					net.Broadcast()
 				end
 			end
@@ -565,10 +566,10 @@ do -- hooks
 		net.Receive("wowozela_sample", function()
 			local ply = net.ReadEntity()
 			local key = net.ReadInt(32)
+			local id = net.ReadInt(32)
 			if IsValid(ply) then
 				local sampler = ply:GetSampler()
 				if sampler and ply == sampler.Player and sampler:IsPlaying() then
-					local id = sampler:GetSampleIndex(key)
 					local snd = sampler.IDs[key]
 					if snd then
 						snd:Stop()
