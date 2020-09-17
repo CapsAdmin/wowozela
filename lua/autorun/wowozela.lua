@@ -101,6 +101,10 @@ if SERVER then
 
 				if wep[test] then
 					wep[test](wep, val)
+					net.Start("wowozela_sample")
+						net.WriteEntity(ply)
+						net.WriteInt(value, 32)
+					net.Broadcast()
 				end
 			end
 		end)
@@ -159,6 +163,7 @@ if SERVER then
 	table.sort(wowozela.Samples, function(a,b) return a[1] < b[1] end)
 	util.AddNetworkString("wowozela_update")
 	util.AddNetworkString("wowozela_key")
+	util.AddNetworkString("wowozela_sample")
 
 	concommand.Add("wowozela_request_samples", function(ply)
 		net.Start("wowozela_update")
@@ -556,6 +561,24 @@ do -- hooks
 	end)
 
 	if CLIENT then
+
+		net.Receive("wowozela_sample", function()
+			local ply = net.ReadEntity()
+			local key = net.ReadInt(32)
+			if IsValid(ply) then
+				local sampler = ply:GetSampler()
+				if sampler and ply == sampler.Player and sampler:IsPlaying() then
+					local id = sampler:GetSampleIndex(key)
+					local snd = sampler.IDs[key]
+					if snd then
+						snd:Stop()
+					end
+
+					sampler:Start(id, key)
+				end
+			end
+		end)
+
 		net.Receive("wowozela_key", function()
 			local ply = net.ReadEntity()
 			local key = net.ReadInt(32)
