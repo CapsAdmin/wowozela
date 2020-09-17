@@ -583,7 +583,9 @@ do -- hooks
 end
 
 
-wowozela.sampleSort = {
+
+
+local sampleSort = {
 	["bass"] = "Instrumental",
 	["bass3"] = "Instrumental",
 	["bassguitar2"] = "Instrumental",
@@ -622,8 +624,16 @@ wowozela.sampleSort = {
 	["woof"] = "Misc"
 }
 
-wowozela.sampleSortIcons = {
+for k,v in pairs(sampleSort) do
+	list.Set("wowozela.sampleSort", k, v)
+end
+
+local sampleSortIcons = {
 	["Instrumental"] = "icon16/bell.png",
 	["Synth"] = "icon16/computer.png",
 	["Vocal"] = "icon16/music.png",
 }
+
+for k,v in pairs(sampleSortIcons) do
+	list.Set("wowozela.sampleSortIcons", k, v)
+end

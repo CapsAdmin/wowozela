@@ -254,7 +254,7 @@ if CLIENT then
     local function generateTable()
         local tbl, tbl2 = {}, {}
         for k,v in pairs(wowozela.Samples) do
-            local t = wowozela.sampleSort[v[2]]
+            local t = list.Get("wowozela.sampleSort")[v[2]]
             if t then
                 if not tbl[t] then
                     tbl[t] = {}
@@ -293,8 +293,9 @@ if CLIENT then
                             local snds = tbl[cat]
 
                             local t, t2 = Menu:AddSubMenu(cat)
-                            if wowozela.sampleSortIcons[cat] then
-                                t2:SetIcon(wowozela.sampleSortIcons[cat])
+                            local icons = list.Get("wowozela.sampleSortIcons")
+                            if icons[cat] then
+                                t2:SetIcon(icons[cat])
                             end
 
                             for _, snd in pairs(snds) do
