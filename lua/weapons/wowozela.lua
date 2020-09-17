@@ -282,7 +282,7 @@ if CLIENT then
         local wep = ply:GetActiveWeapon()
         if IsValid(wep) and wep:GetClass() == "wowozela" then
             if ply:KeyDown(IN_RELOAD) then
-                if bind == "+menu" and pressed then
+                if bind:find("+menu") and pressed then
                     if selectionIndex and wep.CurrentLayout then
                         local tbl, tbl2 = generateTable()
                         local selectionData = table.Copy(selectionIndex)
