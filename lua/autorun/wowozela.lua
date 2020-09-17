@@ -3,6 +3,67 @@ if not wowozela then wowozela = {} end
 
 if CLIENT then
 	wowozela.volume = CreateClientConVar("wowozela_volume","0.5",true,false)
+
+	function surface.DrawWedge(centerX, centerY, innerRadius, outerRadius, startAng, endAng, numText, nameText)
+		local cir = {}
+
+		local a = math.rad( startAng )
+		table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+
+		a = math.rad( startAng )
+		table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+
+		a = math.rad( endAng )
+		table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+
+		a = math.rad( endAng )
+		table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+
+		local centerAng = (endAng + startAng) / 2
+		a = math.rad( centerAng )
+		surface.SetTexture(0)
+		surface.DrawPoly(cir)
+		local rad = ((outerRadius + innerRadius) / 2 - 7)
+
+		draw.Text( {
+		    text = numText,
+		    pos = { centerX + math.sin( a ) * rad, centerY + math.cos( a ) * rad},
+		    xalign = TEXT_ALIGN_CENTER,
+		    yalign = TEXT_ALIGN_CENTER
+		} )
+
+		local align = TEXT_ALIGN_CENTER
+
+		if centerAng > 15 and centerAng < 165 then
+		    align = TEXT_ALIGN_LEFT
+		elseif centerAng > 195 and centerAng < 345 then
+		    align = TEXT_ALIGN_RIGHT
+		end
+
+		draw.Text( {
+		    text = nameText,
+		    pos = { centerX + math.sin( a ) * outerRadius * 1.05, centerY + math.cos( a ) * outerRadius * 1.05 },
+		    xalign = align,
+		    yalign = TEXT_ALIGN_CENTER,
+		    font = "WowozelaFont2"
+		} )
+	end
+
+	function wowozela.SetSampleIndex(isLeft, isRight, noteIndex)
+		local done = false
+		if isLeft then
+			RunConsoleCommand("wowozela_select_left", noteIndex)
+			done = true
+		end
+
+		if isRight then
+			RunConsoleCommand("wowozela_select_right", noteIndex)
+			done = true
+		end
+
+		return done
+	end
+
 end
 
 wowozela.ValidNotes =
@@ -20,19 +81,28 @@ wowozela.ValidKeys =
 	IN_USE
 }
 
+function wowozela.GetSampleIndex(sampleName)
+	for k,v in pairs(wowozela.Samples) do
+		if v[2] == sampleName then
+			return k
+		end
+	end
+end
+
+
 if SERVER then
 	for key, value in pairs(wowozela.ValidNotes) do
 		concommand.Add("wowozela_select_" .. key:lower(), function(ply, _, args)
 			local wep = ply:GetActiveWeapon()
 			if wep:IsValid() and wep:GetClass() == "wowozela" then
-				
+
 				local val = tonumber(args[1]) or 1
 				local test = "SetNote" .. key -- naughty
-				
+
 				if wep[test] then
 					wep[test](wep, val)
 				end
-			end		
+			end
 		end)
 	end
 	wowozela.Samples = {}
@@ -76,9 +146,8 @@ if SERVER then
 	}
 
 	for _, file_name in pairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
-		
 		table.insert(wowozela.Samples, {"wowozela/samples/" .. file_name, file_name:match("(.+)%.wav")})
-		
+
 		if SERVER then
 			if not workshopSounds[file_name] then
 				resource.AddFile("sound/wowozela/samples/" .. file_name)
@@ -131,7 +200,7 @@ end
 function wowozela.IsValidNote(key)
 	for k,v in pairs(wowozela.ValidNotes) do
 		if v == key then
-			return k 
+			return k
 		end
 	end
 	return false
@@ -182,7 +251,7 @@ do -- sample meta
 		if self.Player == LocalPlayer() and not self.Player:ShouldDrawLocalPlayer() then
 			return self.Player:EyePos()
 		end
-		
+
 		local id = self.Player:LookupBone("ValveBiped.Bip01_Head1")
 		local pos = id and self.Player:GetBonePosition(id)
 		return pos or self.Player:EyePos()
@@ -190,11 +259,11 @@ do -- sample meta
 
 	function META:GetAngles()
 		local ang = self.Player:GetAimVector():Angle()
-		
+
 		ang.p = math.NormalizeAngle(ang.p)
 		ang.y = math.NormalizeAngle(ang.y)
 		ang.r = 0
-		
+
 		return ang
 	end
 
@@ -231,7 +300,7 @@ do -- sample meta
 		if self:IsKeyDown(IN_WALK) then
 			num = num - 1
 		end
-		
+
 		self.Pitch = math.Clamp(math.floor(100 * 2 ^ num), 1, 255)
 
 		for i in pairs(wowozela.Samples) do
@@ -289,18 +358,18 @@ do -- sample meta
 			if press then
 				if self:IsKeyDown(IN_SPEED) and self.Player == LocalPlayer() then
 					local ang = self.Player:EyeAngles()
-					
+
 					local p = ang.p / 89 -- -1 to 1
 					p = (p + 1) / 2 -- 0 to 1
 					p = p * 12 -- 0 to 12
-					p = math.Round(p*2)/2 -- rounded
+					p = math.Round(p * 2) / 2 -- rounded
 					p = p / 12
 					p = (p * 2) - 1
-					
+
 					ang.p = p * 89
 					self.Player:SetEyeAngles(ang)
 				end
-			
+
 				self:Start(id, key)
 				self:SetVolume(1)
 			else
@@ -311,12 +380,12 @@ do -- sample meta
 
 	function META:Think()
 		if not self:CanPlay() then
-			for _, csp in pairs(self.CSP) do 
+			for _, csp in pairs(self.CSP) do
 				csp:Stop()
 			end
 			return
 		end
-	
+
 		local ang = self:GetAngles()
 
 		if self:IsKeyDown(IN_USE) then
@@ -330,7 +399,7 @@ do -- sample meta
 			self:SetVolume(1)
 		end
 
-		self:SetPitch(-ang.p/89)
+		self:SetPitch(-ang.p / 89)
 
 		if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
 			self:MakeParticle()
@@ -341,16 +410,16 @@ do -- sample meta
 
 	function META:MakeParticle()
 		local pitch = self.Pitch
-		
+
 		emitter = emitter or ParticleEmitter(Vector())
-		
+
 		local scale = self.Player:GetModelScale()
-		
+
 		local forward = self:GetAngles():Forward()
 		local particle = emitter:Add("particle/fire", self:GetPos() + forward * 10 * scale)
-		
+
 		if particle then
-			local col = HSVToColor(pitch*2.55, self.Volume, 1)
+			local col = HSVToColor(pitch * 2.55, self.Volume, 1)
 			particle:SetColor(col.r, col.g, col.b, self.Volume)
 
 			particle:SetVelocity(self.Volume * self:GetAngles():Forward() * 500 * scale)
@@ -361,10 +430,10 @@ do -- sample meta
 			local size = ((-pitch + 255) / 250) + 1
 
 			particle:SetAngles(AngleRand())
-			particle:SetStartSize(math.max(size*2*scale, 1) * 1.5)
+			particle:SetStartSize(math.max(size * 2 * scale, 1) * 1.5)
 			particle:SetEndSize(0)
 
-			particle:SetStartAlpha(255*self.Volume)
+			particle:SetStartAlpha(255 * self.Volume)
 			particle:SetEndAlpha(0)
 
 			--particle:SetRollDelta(math.Rand(-1,1)*20)
@@ -397,7 +466,7 @@ do -- hooks
 
 		local sampler = ply:GetSampler()
 		if sampler and sampler.OnKeyEvent and ply == sampler.Player then
-			
+
 			sampler.Keys[key] = press
 
 			return sampler:OnKeyEvent(key, press)
@@ -428,7 +497,7 @@ do -- hooks
 	hook.Add("Think", "wowozela_think", wowozela.Think)
 
 
-	
+
 	function wowozela.Draw()
 		for key, ply in pairs(player.GetAll()) do
 			local sampler = ply:GetSampler()
@@ -450,24 +519,22 @@ do -- hooks
 			net.SendOmit(ply)
 		else
 			net.Broadcast()
-		end 
+		end
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
 		if not IsFirstTimePredicted() then return end
-		
-		local wep = ply:GetActiveWeapon()
-		if wep:IsValid() and wep:GetClass() == "wowozela" then
-			local wep = ply:GetActiveWeapon()
-			if wowozela.IsValidKey(key) then
-				if SERVER and wep.OnKeyEvent then
-					wowozela.BroadcastKeyEvent(ply, key, true)
-					wep:OnKeyEvent(key, true)
-				end
 
-				if CLIENT then
-					wowozela.KeyEvent(ply, key, true)
-				end
+
+		local wep = ply:GetActiveWeapon()
+		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
+			if SERVER and wep.OnKeyEvent then
+				wowozela.BroadcastKeyEvent(ply, key, true)
+				wep:OnKeyEvent(key, true)
+			end
+
+			if CLIENT then
+				wowozela.KeyEvent(ply, key, true)
 			end
 		end
 	end)
@@ -476,16 +543,14 @@ do -- hooks
 		if not IsFirstTimePredicted() then return end
 
 		local wep = ply:GetActiveWeapon()
-		if wep:IsValid() and wep:GetClass() == "wowozela" then
-			if wowozela.IsValidKey(key) then
-				if SERVER and wep.OnKeyEvent then
-					wowozela.BroadcastKeyEvent(ply, key, false)
-					wep:OnKeyEvent(key, false)
-				end
+		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
+			if SERVER and wep.OnKeyEvent then
+				wowozela.BroadcastKeyEvent(ply, key, false)
+				wep:OnKeyEvent(key, false)
+			end
 
-				if CLIENT then
-					wowozela.KeyEvent(ply, key, false)
-				end
+			if CLIENT then
+				wowozela.KeyEvent(ply, key, false)
 			end
 		end
 	end)
@@ -499,7 +564,7 @@ do -- hooks
 				wowozela.KeyEvent(ply, key, press)
 			end
 		end)
-		
+
 		RunConsoleCommand("wowozela_request_samples")
 	else
 		hook.Add("PlayerInitialSpawn", "WowozelaPlayerJoined", function(ply)
@@ -515,4 +580,60 @@ do -- hooks
 			net.Broadcast()
 		end
 	end
+end
+
+
+
+
+local sampleSort = {
+	["bass"] = "Instrumental",
+	["bass3"] = "Instrumental",
+	["bassguitar2"] = "Instrumental",
+	["bell"] = "Instrumental",
+	["coolchiff"] = "Instrumental",
+	["crackpiano"] = "Instrumental",
+	["dingdong"] = "Instrumental",
+	["dooooooooh"] = "Vocal",
+	["dusktodawn"] = "Synth",
+	["flute"] = "Instrumental",
+	["fmbass"] = "Instrumental",
+	["fuzz"] = "Instrumental",
+	["guitar"] = "Instrumental",
+	["hit"] = "Instrumental",
+	["honkytonk"] = "Instrumental",
+	["horn"] = "Misc",
+	["justice"] = "Instrumental",
+	["littleflower"] = "Instrumental",
+	["meow"] = "Misc",
+	["miku"] = "Vocal",
+	["mmm"] = "Vocal",
+	["oohh"] = "Vocal",
+	["overdrive"] = "Misc",
+	["pianostab"] = "Instrumental",
+	["prima"] = "Vocal",
+	["quack"] = "Misc",
+	["saw_880"] = "Synth",
+	["sine_880"] = "Synth",
+	["skull"] = "Instrumental",
+	["slap"] = "Instrumental",
+	["square_880"] = "Synth",
+	["string"] = "Instrumental",
+	["toypiano"] = "Instrumental",
+	["triangle_880"] = "Synth",
+	["trumpet"] = "Instrumental",
+	["woof"] = "Misc"
+}
+
+for k,v in pairs(sampleSort) do
+	list.Set("wowozela.sampleSort", k, v)
+end
+
+local sampleSortIcons = {
+	["Instrumental"] = "icon16/bell.png",
+	["Synth"] = "icon16/computer.png",
+	["Vocal"] = "icon16/music.png",
+}
+
+for k,v in pairs(sampleSortIcons) do
+	list.Set("wowozela.sampleSortIcons", k, v)
 end
