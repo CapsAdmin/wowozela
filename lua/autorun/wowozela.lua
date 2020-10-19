@@ -326,16 +326,18 @@ do -- sample meta
 		if not self:CanPlay() then return end
 
 		if self.CSP[i] then
+
+			local volume = math.Clamp(wowozela.volume:GetFloat() or 1, 0.01, 1)
 			if id then
 				local snd = self.IDs[id]
 				if snd then
 					snd:Stop()
 				end
 				snd = self.CSP[i]
-				snd:PlayEx(self.Volume, self.Pitch)
+				snd:PlayEx(self.Volume * volume, self.Pitch)
 				self.IDs[id] = snd
 			else
-				self.CSP[i]:PlayEx(self.Volume, self.Pitch)
+				self.CSP[i]:PlayEx(self.Volume * volume, self.Pitch)
 			end
 		end
 	end

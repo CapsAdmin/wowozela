@@ -26,6 +26,7 @@ SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.Instructions = ""
 SWEP.PrintName = "Wowozela"
+--SWEP.Category = "Toys"
 
 SWEP.SlotPos = 1
 SWEP.Slot = 1
@@ -138,6 +139,15 @@ if CLIENT then
             weight		= 1000,
         }
     )
+
+    surface.CreateFont(
+        "WowozelaTutorial",
+        {
+            font		= "Roboto Bk",
+            size		= 24,
+            weight		= 1000,
+        }
+    )
     local wason = false
 
     local selectionIndex = nil
@@ -151,6 +161,14 @@ if CLIENT then
 
         if file.Exists("wowozela.txt", "DATA") then
             self.Wedges = util.JSONToTable(file.Read("wowozela.txt", "DATA"))
+        end
+
+        self.tutorialActive = true
+        for I = 1, 10 do
+            if table.Count(self.Wedges[I]) ~= 0 then
+                self.tutorialActive = false
+                break
+            end
         end
     end
 
@@ -211,6 +229,18 @@ if CLIENT then
                 color = Color(255, 255, 255, 255)
             } )
 
+            if self.tutorialActive then
+                local keyName = input.LookupBinding("+menu", true) or "<+menu not bound>"
+                draw.Text( {
+                    text = ("Hover over a wedge and assign sounds with %s"):format(keyName:upper()),
+                    pos = { ScrW() / 2, ScrH() / 2 + 180 },
+                    xalign = TEXT_ALIGN_CENTER,
+                    yalign = TEXT_ALIGN_CENTER,
+                    font = "WowozelaTutorial",
+                    color = Color(255, 255, 255, 255)
+                } )
+            end
+
             for I = 1, (360 / wedgeSize) do
                 local wedgeAng = ((I - 1) * wedgeSize)
                 local col = HSVToColor(wedgeAng, 1, 0.75)
@@ -221,9 +251,10 @@ if CLIENT then
                     col = HSVToColor(wedgeAng, 1, 0.5)
                     col.a = 150
                 end
+                local wedgeText = tostring(self.Wedges[self.CurrentLayout][I] or "(unassigned)")
 
                 surface.SetDrawColor(col)
-                surface.DrawWedge(ScrW() / 2, ScrH() / 2, 130, 150, wedgeAng, wedgeAng + wedge2, string.format("%d", I == 10 and 0 or I), ("%s"):format(self.Wedges[self.CurrentLayout][I] or "(unassigned)"))
+                surface.DrawWedge(ScrW() / 2, ScrH() / 2, 130, 150, wedgeAng, wedgeAng + wedge2, string.format("%d", I == 10 and 0 or I), wedgeText)
 
                 col.a = 50
                 surface.SetDrawColor(col)
@@ -302,6 +333,7 @@ if CLIENT then
                                 t:AddOption(snd, function()
                                     wep.Wedges[selectionData.layout][selectionData[3]] = snd
                                     file.Write("wowozela.txt", util.TableToJSON(wep.Wedges, true))
+                                    wep.tutorialActive = false
 
                                     local noteIndex = wowozela.GetSampleIndex(snd)
                                     if noteIndex and wowozela.SetSampleIndex(selectionData[1], selectionData[2], noteIndex) then
