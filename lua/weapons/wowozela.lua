@@ -229,8 +229,13 @@ if CLIENT then
 
             if self.tutorialActive then
                 local keyName = input.LookupBinding("+menu", true) or "<+menu not bound>"
+                local keyName2 = input.LookupBinding("+attack", true) or "<+attack not bound>"
+                local keyName3 = input.LookupBinding("+attack2", true) or "<+attack2 not bound>"
+                local text = ("Press %s or %s"):format(keyName2:upper(), keyName3:upper())
+                local text2 = ("Hover over a wedge and assign sounds by pressing %s"):format(keyName:upper())
+
                 draw.Text( {
-                    text = ("Hover over a wedge and assign sounds with %s"):format(keyName:upper()),
+                    text = (LocalPlayer():KeyDown(IN_ATTACK) or LocalPlayer():KeyDown(IN_ATTACK2)) and text2 or text,
                     pos = { ScrW() / 2, ScrH() / 2 + 180 },
                     xalign = TEXT_ALIGN_CENTER,
                     yalign = TEXT_ALIGN_CENTER,
