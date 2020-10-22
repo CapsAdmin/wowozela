@@ -221,7 +221,7 @@ if CLIENT then
             drawCircle(ScrW() / 2, ScrH() / 2, 36, 10)
 
             draw.Text( {
-                text = tostring(self.CurrentLayout == 10 and 0 or self.CurrentLayout),
+                text = ("Page #%d"):format(self.CurrentLayout == 10 and 0 or self.CurrentLayout),
                 pos = { ScrW() / 2, ScrH() / 2 },
                 xalign = TEXT_ALIGN_CENTER,
                 yalign = TEXT_ALIGN_CENTER,

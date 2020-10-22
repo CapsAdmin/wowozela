@@ -241,7 +241,7 @@ do -- sample meta
 	end
 
 	function META:CanPlay()
-		if wowozela.disabled then return end
+		--if wowozela.disabled then return end
 
 
 		local wep = self.Player:GetActiveWeapon()
@@ -411,6 +411,13 @@ do -- sample meta
 
 		if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
 			self:MakeParticle()
+		end
+
+		if wowozela.disabled then
+			for _, csp in pairs(self.CSP) do
+				csp:Stop()
+			end
+			return
 		end
 	end
 
