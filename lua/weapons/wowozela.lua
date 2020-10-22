@@ -120,13 +120,11 @@ hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
 end)
 
 if CLIENT then
-    local size = 80
-
     surface.CreateFont(
         "WowozelaFont",
         {
             font		= "Roboto Bk",
-            size		= size,
+            size		= 35,
             weight		= 1000,
         }
     )
@@ -221,7 +219,7 @@ if CLIENT then
             drawCircle(ScrW() / 2, ScrH() / 2, 36, 10)
 
             draw.Text( {
-                text = tostring(self.CurrentLayout == 10 and 0 or self.CurrentLayout),
+                text = ("Page #%d"):format(self.CurrentLayout == 10 and 0 or self.CurrentLayout),
                 pos = { ScrW() / 2, ScrH() / 2 },
                 xalign = TEXT_ALIGN_CENTER,
                 yalign = TEXT_ALIGN_CENTER,
@@ -231,8 +229,13 @@ if CLIENT then
 
             if self.tutorialActive then
                 local keyName = input.LookupBinding("+menu", true) or "<+menu not bound>"
+                local keyName2 = input.LookupBinding("+attack", true) or "<+attack not bound>"
+                local keyName3 = input.LookupBinding("+attack2", true) or "<+attack2 not bound>"
+                local text = ("Press %s or %s"):format(keyName2:upper(), keyName3:upper())
+                local text2 = ("Hover over a wedge and assign sounds by pressing %s"):format(keyName:upper())
+
                 draw.Text( {
-                    text = ("Hover over a wedge and assign sounds with %s"):format(keyName:upper()),
+                    text = (LocalPlayer():KeyDown(IN_ATTACK) or LocalPlayer():KeyDown(IN_ATTACK2)) and text2 or text,
                     pos = { ScrW() / 2, ScrH() / 2 + 180 },
                     xalign = TEXT_ALIGN_CENTER,
                     yalign = TEXT_ALIGN_CENTER,
@@ -276,9 +279,43 @@ if CLIENT then
                 gui.EnableScreenClicker(false)
                 wason = false
             end
-        elseif wason then
-            gui.EnableScreenClicker(false)
-            wason = false
+        else
+            if wason then
+                gui.EnableScreenClicker(false)
+                wason = false
+            end
+            draw.SimpleText(
+                wowozela.Samples[self:GetNoteLeft()][2],
+                "WowozelaFont",
+                16,
+                ScrH() - ScrH() / 6,
+                HSVToColor((self:GetNoteLeft() / #wowozela.Samples) * 360, 1, 1),
+                TEXT_ALIGN_LEFT,
+                TEXT_ALIGN_CENTER
+            )
+
+            draw.SimpleText(
+                wowozela.Samples[self:GetNoteRight()][2],
+                "WowozelaFont",
+                ScrW() - 16,
+                ScrH() - ScrH() / 6,
+                HSVToColor((self:GetNoteRight() / #wowozela.Samples) * 360, 1, 1),
+                TEXT_ALIGN_RIGHT,
+                TEXT_ALIGN_CENTER
+            )
+
+            local vol = GetConVar("wowozela_volume")
+            if vol and vol:GetFloat() <= 0.01 then
+                draw.SimpleText(
+                    "Warning your wowozela_volume is set to 0!",
+                    "WowozelaFont",
+                    ScrW() / 2,
+                    ScrH() - 10,
+                    Color(255, 255, 255, 150),
+                    TEXT_ALIGN_CENTER,
+                    TEXT_ALIGN_BOTTOM
+                )
+            end
         end
     end
 

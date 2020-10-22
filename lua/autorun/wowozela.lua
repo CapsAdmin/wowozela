@@ -241,7 +241,7 @@ do -- sample meta
 	end
 
 	function META:CanPlay()
-		if wowozela.disabled then return end
+		--if wowozela.disabled then return end
 
 
 		local wep = self.Player:GetActiveWeapon()
@@ -290,7 +290,7 @@ do -- sample meta
 
 	function META:ChangeVolume(i, num)
 		if self.CSP[i] then
-			self.CSP[i]:ChangeVolume((wowozela.intvolume or 1) * self.Volume, -1)
+			self.CSP[i]:ChangeVolume((wowozela.intvolume or 0.5) * self.Volume, -1)
 		end
 	end
 
@@ -326,8 +326,7 @@ do -- sample meta
 		if not self:CanPlay() then return end
 
 		if self.CSP[i] then
-
-			local volume = math.Clamp(wowozela.volume:GetFloat() or 1, 0.01, 1)
+			local volume = wowozela.intvolume or 0.5
 			if id then
 				local snd = self.IDs[id]
 				if snd then
@@ -411,6 +410,13 @@ do -- sample meta
 
 		if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
 			self:MakeParticle()
+		end
+
+		if wowozela.disabled then
+			for _, csp in pairs(self.CSP) do
+				csp:Stop()
+			end
+			return
 		end
 	end
 
