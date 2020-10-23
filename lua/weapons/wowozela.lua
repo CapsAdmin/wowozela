@@ -283,7 +283,7 @@ if CLIENT then
         local sample = wowozela.Samples[self:GetNoteIndexLeft()]
         if not sample then return end
 
-        for i, v in ipairs(self.Pages[self.CurrentPageIndex]) do
+        for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
             if sample.path == v.path then
                 return i
             end
@@ -294,7 +294,7 @@ if CLIENT then
         local sample = wowozela.Samples[self:GetNoteIndexRight()]
         if not sample then return end
 
-        for i, v in ipairs(self.Pages[self.CurrentPageIndex]) do
+        for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
             if sample.path == v.path then
                 return i
             end
