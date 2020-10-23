@@ -4,62 +4,31 @@ if not wowozela then wowozela = {} end
 if CLIENT then
 	wowozela.volume = CreateClientConVar("wowozela_volume","0.5",true,false)
 
-	function surface.DrawWedge(centerX, centerY, innerRadius, outerRadius, startAng, endAng, numText, nameText)
-		local cir = {}
+	function wowozela.SetSampleIndexLeft(noteIndex)
+		local done = false
+        local wep = LocalPlayer():GetActiveWeapon()
+        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
 
-		local a = math.rad( startAng )
-		table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        RunConsoleCommand("wowozela_select_left", noteIndex)
+        done = true
+        if not wowozela.Samples[noteIndex] then
+            print("wowozela left: note index " .. noteIndex .. " is out of range")
+        end
 
-		a = math.rad( startAng )
-		table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-
-		a = math.rad( endAng )
-		table.insert( cir, { x = centerX + math.sin( a ) * outerRadius, y = centerY + math.cos( a ) * outerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-
-		a = math.rad( endAng )
-		table.insert( cir, { x = centerX + math.sin( a ) * innerRadius, y = centerY + math.cos( a ) * innerRadius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-
-		local centerAng = (endAng + startAng) / 2
-		a = math.rad( centerAng )
-		surface.SetTexture(0)
-		surface.DrawPoly(cir)
-		local rad = ((outerRadius + innerRadius) / 2 - 7)
-
-		draw.Text( {
-		    text = numText,
-		    pos = { centerX + math.sin( a ) * rad, centerY + math.cos( a ) * rad},
-		    xalign = TEXT_ALIGN_CENTER,
-		    yalign = TEXT_ALIGN_CENTER
-		} )
-
-		local align = TEXT_ALIGN_CENTER
-
-		if centerAng > 15 and centerAng < 165 then
-		    align = TEXT_ALIGN_LEFT
-		elseif centerAng > 195 and centerAng < 345 then
-		    align = TEXT_ALIGN_RIGHT
-		end
-
-		draw.Text( {
-		    text = nameText,
-		    pos = { centerX + math.sin( a ) * outerRadius * 1.05, centerY + math.cos( a ) * outerRadius * 1.05 },
-		    xalign = align,
-		    yalign = TEXT_ALIGN_CENTER,
-		    font = "WowozelaFont2"
-		} )
+		return done
 	end
 
-	function wowozela.SetSampleIndex(isLeft, isRight, noteIndex)
-		local done = false
-		if isLeft then
-			RunConsoleCommand("wowozela_select_left", noteIndex)
-			done = true
-		end
 
-		if isRight then
-			RunConsoleCommand("wowozela_select_right", noteIndex)
-			done = true
-		end
+	function wowozela.SetSampleIndexRight(noteIndex)
+		local done = false
+        local wep = LocalPlayer():GetActiveWeapon()
+        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
+
+        RunConsoleCommand("wowozela_select_right", noteIndex)
+        done = true
+        if not wowozela.Samples[noteIndex] then
+            print("wowozela right: note index " .. noteIndex .. " is out of range")
+        end
 
 		return done
 	end
@@ -83,7 +52,7 @@ wowozela.ValidKeys =
 
 function wowozela.GetSampleIndex(sampleName)
 	for k,v in pairs(wowozela.Samples) do
-		if v[2] == sampleName then
+		if v.name == sampleName then
 			return k
 		end
 	end
@@ -97,9 +66,9 @@ if SERVER then
 			if wep:IsValid() and wep:GetClass() == "wowozela" then
 
 				local val = tonumber(args[1]) or 1
-				local test = "SetNote" .. key -- naughty
+				local test = "SetNoteIndex" .. key -- naughty
 
-				if wep[test] then
+                if wep[test] then
 					wep[test](wep, val)
 					net.Start("wowozela_sample")
 						net.WriteEntity(ply)
@@ -109,59 +78,30 @@ if SERVER then
 				end
 			end
 		end)
-	end
+    end
+    
 	wowozela.Samples = {}
-	local workshopSounds = {
-		["bass.wav"] = true,
-		["bass3.wav"] = true,
-		["bassguitar2.wav"] = true,
-		["bell.wav"] = true,
-		["coolchiff.wav"] = true,
-		["crackpiano.wav"] = true,
-		["dingdong.wav"] = true,
-		["dooooooooh.wav"] = true,
-		["dusktodawn.wav"] = true,
-		["flute.wav"] = true,
-		["fmbass.wav"] = true,
-		["fuzz.wav"] = true,
-		["guitar.wav"] = true,
-		["hit.wav"] = true,
-		["honkytonk.wav"] = true,
-		["horn.wav"] = true,
-		["justice.wav"] = true,
-		["littleflower.wav"] = true,
-		["meow.wav"] = true,
-		["miku.wav"] = true,
-		["mmm.wav"] = true,
-		["oohh.wav"] = true,
-		["overdrive.wav"] = true,
-		["pianostab.wav"] = true,
-		["prima.wav"] = true,
-		["quack.wav"] = true,
-		["saw_880.wav"] = true,
-		["sine_880.wav"] = true,
-		["skull.wav"] = true,
-		["slap.wav"] = true,
-		["square_880.wav"] = true,
-		["string.wav"] = true,
-		["toypiano.wav"] = true,
-		["triangle_880.wav"] = true,
-		["trumpet.wav"] = true,
-		["woof.wav"] = true
-	}
 
-	for _, file_name in pairs(file.Find("sound/wowozela/samples/*.wav", "GAME")) do
-		table.insert(wowozela.Samples, {"wowozela/samples/" .. file_name, file_name:match("(.+)%.wav")})
+    local _, directories = file.Find("sound/wowozela/samples/*", "GAME")
 
-		if SERVER then
-			if not workshopSounds[file_name] then
-				resource.AddFile("sound/wowozela/samples/" .. file_name)
-			end
-			resource.AddWorkshop("108170491")
-		end
+    for _, directory in ipairs(directories) do
+        for _, file_name in ipairs(file.Find("sound/wowozela/samples/" .. directory .. "/*", "GAME")) do
+            if file_name:EndsWith(".ogg") or file_name:EndsWith(".wav") or file_name:EndsWith(".mp3") then
+                table.insert(wowozela.Samples, {
+                    category = directory,
+                    path = "wowozela/samples/" .. directory .. "/" .. file_name, 
+                    name = file_name:match("(.+)%.")
+                })
+
+                if SERVER then
+                    resource.AddFile("sound/wowozela/samples/" .. file_name)
+                    resource.AddWorkshop("108170491")
+                end
+            end
+        end
 	end
 
-	table.sort(wowozela.Samples, function(a,b) return a[1] < b[1] end)
+	table.sort(wowozela.Samples, function(a,b) return a.path < b.path end)
 	util.AddNetworkString("wowozela_update")
 	util.AddNetworkString("wowozela_key")
 	util.AddNetworkString("wowozela_sample")
@@ -175,11 +115,13 @@ if SERVER then
 else
 	wowozela.Samples = {}
 	net.Receive("wowozela_update", function()
-		wowozela.Samples = net.ReadTable()
+        wowozela.Samples = net.ReadTable()
+
+        for _, ply in ipairs(player.GetAll()) do
+            wowozela.New(ply)
+        end
 	end)
 end
-
-
 
 
 function wowozela.New(ply)
@@ -222,28 +164,25 @@ do -- sample meta
 	function META:Initialize(ply)
 		self.Player = ply
 
-		for i, path in pairs(wowozela.Samples) do
-			self:SetSample(i, path[1])
+        for i, sample in pairs(wowozela.Samples) do
+			self:SetSample(i, sample.path)
 		end
 
 		self.IDs = {}
 	end
 
-	function META:GetSampleIndex(key)
-		local Note = wowozela.IsValidNote(key)
+	function META:KeyToSampleIndex(key)
+        local Note = wowozela.IsValidNote(key)
 		if Note then
 			local wep = self.Player:GetActiveWeapon()
-			local get = "GetNote" .. Note
-			if wep:IsWeapon() and wep[get] and wep:GetClass() == "wowozela" then
+            local get = "GetNoteIndex" .. Note
+            if wep:IsWeapon() and wep:GetClass() == "wowozela" and  wep[get] then
 				return math.Clamp(wep[get](wep), 1, #wowozela.Samples)
 			end
 		end
 	end
 
 	function META:CanPlay()
-		--if wowozela.disabled then return end
-
-
 		local wep = self.Player:GetActiveWeapon()
 		if wep:IsWeapon() and wep:GetClass() == "wowozela" then
 			self.Weapon = wep
@@ -322,7 +261,7 @@ do -- sample meta
 		end
 	end
 
-	function META:Start(i, id)
+    function META:Start(i, id)
 		if not self:CanPlay() then return end
 
 		if self.CSP[i] then
@@ -359,10 +298,10 @@ do -- sample meta
 		return self.Keys[key] == true
 	end
 
-	function META:OnKeyEvent(key, press)
-		local id = self:GetSampleIndex(key)
-		if id then
-			if press then
+    function META:OnKeyEvent(key, press)
+        local id = self:KeyToSampleIndex(key)
+        if id then
+            if press then
 				if self:IsKeyDown(IN_SPEED) and self.Player == LocalPlayer() then
 					local ang = self.Player:EyeAngles()
 
@@ -375,8 +314,8 @@ do -- sample meta
 
 					ang.p = p * 89
 					self.Player:SetEyeAngles(ang)
-				end
-
+                end
+                
 				self:Start(id, key)
 				self:SetVolume(1)
 			else
@@ -456,7 +395,7 @@ do -- sample meta
 		end
 	end
 
-	wowozela.SamplerMeta = META
+    wowozela.SamplerMeta = META
 end
 
 do -- player meta
@@ -468,21 +407,10 @@ do -- player meta
 end
 
 do -- hooks
-
-	local hack = {}
-
-	function wowozela.KeyEvent(ply, key, press)
-		--WHAT
-		local id = ply:UniqueID() .. key
-		if hack[id] == press then return end
-		hack[id] = press
-		--WHAT
-
-		local sampler = ply:GetSampler()
-		if sampler and sampler.OnKeyEvent and ply == sampler.Player then
-
-			sampler.Keys[key] = press
-
+    function wowozela.KeyEvent(ply, key, press)
+        local sampler = ply:GetSampler()
+        if sampler and sampler.OnKeyEvent and ply == sampler.Player then
+            sampler.Keys[key] = press
 			return sampler:OnKeyEvent(key, press)
 		end
 	end
@@ -510,8 +438,6 @@ do -- hooks
 
 	hook.Add("Think", "wowozela_think", wowozela.Think)
 
-
-
 	function wowozela.Draw()
 		for key, ply in pairs(player.GetAll()) do
 			local sampler = ply:GetSampler()
@@ -537,9 +463,8 @@ do -- hooks
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
-		if not IsFirstTimePredicted() then return end
-
-
+        if not IsFirstTimePredicted() then return end
+        
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
 			if SERVER and wep.OnKeyEvent then
@@ -614,58 +539,6 @@ do -- hooks
 	end
 end
 
-
-
-
-local sampleSort = {
-	["bass"] = "Instrumental",
-	["bass3"] = "Instrumental",
-	["bassguitar2"] = "Instrumental",
-	["bell"] = "Instrumental",
-	["coolchiff"] = "Instrumental",
-	["crackpiano"] = "Instrumental",
-	["dingdong"] = "Instrumental",
-	["dooooooooh"] = "Vocal",
-	["dusktodawn"] = "Synth",
-	["flute"] = "Instrumental",
-	["fmbass"] = "Instrumental",
-	["fuzz"] = "Instrumental",
-	["guitar"] = "Instrumental",
-	["hit"] = "Instrumental",
-	["honkytonk"] = "Instrumental",
-	["horn"] = "Misc",
-	["justice"] = "Instrumental",
-	["littleflower"] = "Instrumental",
-	["meow"] = "Misc",
-	["miku"] = "Vocal",
-	["mmm"] = "Vocal",
-	["oohh"] = "Vocal",
-	["overdrive"] = "Misc",
-	["pianostab"] = "Instrumental",
-	["prima"] = "Vocal",
-	["quack"] = "Misc",
-	["saw_880"] = "Synth",
-	["sine_880"] = "Synth",
-	["skull"] = "Instrumental",
-	["slap"] = "Instrumental",
-	["square_880"] = "Synth",
-	["string"] = "Instrumental",
-	["toypiano"] = "Instrumental",
-	["triangle_880"] = "Synth",
-	["trumpet"] = "Instrumental",
-	["woof"] = "Misc"
-}
-
-for k,v in pairs(sampleSort) do
-	list.Set("wowozela.sampleSort", k, v)
-end
-
-local sampleSortIcons = {
-	["Instrumental"] = "icon16/bell.png",
-	["Synth"] = "icon16/computer.png",
-	["Vocal"] = "icon16/music.png",
-}
-
-for k,v in pairs(sampleSortIcons) do
-	list.Set("wowozela.sampleSortIcons", k, v)
+for _, ply in ipairs(player.GetAll()) do
+    wowozela.New(ply)
 end
