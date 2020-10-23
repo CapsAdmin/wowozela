@@ -246,11 +246,13 @@ if CLIENT then
             end
         end
 
-
         if file.Exists("wowozela_custom_page.txt", "DATA") then
-            self.Pages[#self.Pages] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
-        else
-            file.Write("wowozela_custom_page.txt", util.TableToJSON(self.Pages[#self.Pages], true))
+            for i,v in ipairs(self.Categories) do
+                if v == "custom" then
+                    self.Pages[i] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
+                    break
+                end
+            end
         end
     end
 
@@ -692,13 +694,10 @@ if CLIENT then
                                 if data.category == category and not done[data.path] then
                                     done[data.path] = true
                                     submenus[data.category]:AddOption(data.name, function()
-
-                                        PrintTable(wep.Pages[selection.page])
                                         wep.Pages[selection.page][selection.index] = data
                                         file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection.page], true))
                                         wep:LoadPages()
-
-                                        --play_non_looping(wep, wowozela.Samples[wep:PageIndexToWowozelaIndex(selection.index)].path)
+                                        play_non_looping(wep, data.path)
                                     end)
                                 end
                             end
