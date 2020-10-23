@@ -6,14 +6,14 @@ if CLIENT then
 
 	function wowozela.SetSampleIndexLeft(noteIndex)
 		local done = false
-        local wep = LocalPlayer():GetActiveWeapon()
-        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
+		local wep = LocalPlayer():GetActiveWeapon()
+		if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
 
-        RunConsoleCommand("wowozela_select_left", noteIndex)
-        done = true
-        if not wowozela.Samples[noteIndex] then
-            print("wowozela left: note index " .. noteIndex .. " is out of range")
-        end
+		RunConsoleCommand("wowozela_select_left", noteIndex)
+		done = true
+		if not wowozela.Samples[noteIndex] then
+			print("wowozela left: note index " .. noteIndex .. " is out of range")
+		end
 
 		return done
 	end
@@ -21,14 +21,14 @@ if CLIENT then
 
 	function wowozela.SetSampleIndexRight(noteIndex)
 		local done = false
-        local wep = LocalPlayer():GetActiveWeapon()
-        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
+		local wep = LocalPlayer():GetActiveWeapon()
+		if not wep:IsValid() or wep:GetClass() ~= "wowozela" then return end
 
-        RunConsoleCommand("wowozela_select_right", noteIndex)
-        done = true
-        if not wowozela.Samples[noteIndex] then
-            print("wowozela right: note index " .. noteIndex .. " is out of range")
-        end
+		RunConsoleCommand("wowozela_select_right", noteIndex)
+		done = true
+		if not wowozela.Samples[noteIndex] then
+			print("wowozela right: note index " .. noteIndex .. " is out of range")
+		end
 
 		return done
 	end
@@ -68,7 +68,7 @@ if SERVER then
 				local val = tonumber(args[1]) or 1
 				local test = "SetNoteIndex" .. key -- naughty
 
-                if wep[test] then
+				if wep[test] then
 					wep[test](wep, val)
 					net.Start("wowozela_sample")
 						net.WriteEntity(ply)
@@ -78,27 +78,27 @@ if SERVER then
 				end
 			end
 		end)
-    end
-    
+	end
+
 	wowozela.Samples = {}
 
-    local _, directories = file.Find("sound/wowozela/samples/*", "GAME")
+	local _, directories = file.Find("sound/wowozela/samples/*", "GAME")
 
-    for _, directory in ipairs(directories) do
-        for _, file_name in ipairs(file.Find("sound/wowozela/samples/" .. directory .. "/*", "GAME")) do
-            if file_name:EndsWith(".ogg") or file_name:EndsWith(".wav") or file_name:EndsWith(".mp3") then
-                table.insert(wowozela.Samples, {
-                    category = directory,
-                    path = "wowozela/samples/" .. directory .. "/" .. file_name, 
-                    name = file_name:match("(.+)%.")
-                })
+	for _, directory in ipairs(directories) do
+		for _, file_name in ipairs(file.Find("sound/wowozela/samples/" .. directory .. "/*", "GAME")) do
+			if file_name:EndsWith(".ogg") or file_name:EndsWith(".wav") or file_name:EndsWith(".mp3") then
+				table.insert(wowozela.Samples, {
+					category = directory,
+					path = "wowozela/samples/" .. directory .. "/" .. file_name,
+					name = file_name:match("(.+)%.")
+				})
 
-                if SERVER then
-                    resource.AddFile("sound/wowozela/samples/" .. file_name)
-                    resource.AddWorkshop("108170491")
-                end
-            end
-        end
+				if SERVER then
+					resource.AddFile("sound/wowozela/samples/" .. file_name)
+					resource.AddWorkshop("108170491")
+				end
+			end
+		end
 	end
 
 	table.sort(wowozela.Samples, function(a,b) return a.path < b.path end)
@@ -115,11 +115,11 @@ if SERVER then
 else
 	wowozela.Samples = {}
 	net.Receive("wowozela_update", function()
-        wowozela.Samples = net.ReadTable()
+		wowozela.Samples = net.ReadTable()
 
-        for _, ply in ipairs(player.GetAll()) do
-            wowozela.New(ply)
-        end
+		for _, ply in ipairs(player.GetAll()) do
+			wowozela.New(ply)
+		end
 	end)
 end
 
@@ -164,7 +164,7 @@ do -- sample meta
 	function META:Initialize(ply)
 		self.Player = ply
 
-        for i, sample in pairs(wowozela.Samples) do
+		for i, sample in pairs(wowozela.Samples) do
 			self:SetSample(i, sample.path)
 		end
 
@@ -172,11 +172,11 @@ do -- sample meta
 	end
 
 	function META:KeyToSampleIndex(key)
-        local Note = wowozela.IsValidNote(key)
+		local Note = wowozela.IsValidNote(key)
 		if Note then
 			local wep = self.Player:GetActiveWeapon()
-            local get = "GetNoteIndex" .. Note
-            if wep:IsWeapon() and wep:GetClass() == "wowozela" and  wep[get] then
+			local get = "GetNoteIndex" .. Note
+			if wep:IsWeapon() and wep:GetClass() == "wowozela" and  wep[get] then
 				return math.Clamp(wep[get](wep), 1, #wowozela.Samples)
 			end
 		end
@@ -261,7 +261,7 @@ do -- sample meta
 		end
 	end
 
-    function META:Start(i, id)
+	function META:Start(i, id)
 		if not self:CanPlay() then return end
 
 		if self.CSP[i] then
@@ -298,10 +298,10 @@ do -- sample meta
 		return self.Keys[key] == true
 	end
 
-    function META:OnKeyEvent(key, press)
-        local id = self:KeyToSampleIndex(key)
-        if id then
-            if press then
+	function META:OnKeyEvent(key, press)
+		local id = self:KeyToSampleIndex(key)
+		if id then
+			if press then
 				if self:IsKeyDown(IN_SPEED) and self.Player == LocalPlayer() then
 					local ang = self.Player:EyeAngles()
 
@@ -314,8 +314,7 @@ do -- sample meta
 
 					ang.p = p * 89
 					self.Player:SetEyeAngles(ang)
-                end
-                
+				end
 				self:Start(id, key)
 				self:SetVolume(1)
 			else
@@ -395,7 +394,7 @@ do -- sample meta
 		end
 	end
 
-    wowozela.SamplerMeta = META
+	wowozela.SamplerMeta = META
 end
 
 do -- player meta
@@ -407,10 +406,10 @@ do -- player meta
 end
 
 do -- hooks
-    function wowozela.KeyEvent(ply, key, press)
-        local sampler = ply:GetSampler()
-        if sampler and sampler.OnKeyEvent and ply == sampler.Player then
-            sampler.Keys[key] = press
+	function wowozela.KeyEvent(ply, key, press)
+		local sampler = ply:GetSampler()
+		if sampler and sampler.OnKeyEvent and ply == sampler.Player then
+			sampler.Keys[key] = press
 			return sampler:OnKeyEvent(key, press)
 		end
 	end
@@ -463,8 +462,7 @@ do -- hooks
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
-        if not IsFirstTimePredicted() then return end
-        
+		if not IsFirstTimePredicted() and not game.SinglePlayer() then return end
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
 			if SERVER and wep.OnKeyEvent then
@@ -479,7 +477,7 @@ do -- hooks
 	end)
 
 	hook.Add("KeyRelease", "wowozela_keyrelease", function(ply, key)
-		if not IsFirstTimePredicted() then return end
+		if not IsFirstTimePredicted() and not game.SinglePlayer() then return end
 
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
@@ -540,5 +538,5 @@ do -- hooks
 end
 
 for _, ply in ipairs(player.GetAll()) do
-    wowozela.New(ply)
+	wowozela.New(ply)
 end
