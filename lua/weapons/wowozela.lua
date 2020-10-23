@@ -215,7 +215,6 @@ if CLIENT then
             "guitar",
             "voices",
             "bass",
-            "piano",
             "drums",
             "horn",
             "animals",
@@ -404,9 +403,11 @@ if CLIENT then
                 self.mouse_shown = true
             end
 
+            local max = #self.Pages[self.CurrentPageIndex]
+
             local ang = math.atan2(mouseY - center_y, center_x - mouseX)
             local ang2 = (math.deg(ang) - 90) % 360
-            local Pagesize = 36
+            local Pagesize = 360/max
             local wedge2 = Pagesize
             local hoverWedge = nil
             local farEnough = (Vector(center_x, center_y) - Vector(mouseX, mouseY)):Length2D()
@@ -438,7 +439,6 @@ if CLIENT then
                 })
             end
 
-            local max = #self.Pages[self.CurrentPageIndex]
 
             if self.Categories[self.CurrentPageIndex] == "custom" then
                 max = 10
