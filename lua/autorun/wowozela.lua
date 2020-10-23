@@ -463,8 +463,7 @@ do -- hooks
 	end
 
 	hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
-        if not IsFirstTimePredicted() then return end
-        
+		if not IsFirstTimePredicted() and not game.SinglePlayer() then return end
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
 			if SERVER and wep.OnKeyEvent then
@@ -479,7 +478,7 @@ do -- hooks
 	end)
 
 	hook.Add("KeyRelease", "wowozela_keyrelease", function(ply, key)
-		if not IsFirstTimePredicted() then return end
+		if not IsFirstTimePredicted() and not game.SinglePlayer() then return end
 
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() and wep:GetClass() == "wowozela" and wowozela.IsValidKey(key) then
