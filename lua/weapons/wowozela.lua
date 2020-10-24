@@ -1,26 +1,23 @@
-local SWEP = _G.SWEP or {Primary = {}, Secondary = {}}
+local SWEP = _G.SWEP or {
+    Primary = {},
+    Secondary = {}
+}
 
 if wowozela == nil then
     wowozela = {}
 
-    wowozela.ValidNotes =
-    {
+    wowozela.ValidNotes = {
         ["Left"] = IN_ATTACK,
         ["Right"] = IN_ATTACK2
     }
 
-    wowozela.ValidKeys =
-    {
-        IN_ATTACK,
-        IN_ATTACK2,
-        IN_WALK,
-        IN_SPEED,
-        IN_USE
-    }
+    wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
 end
-if SERVER then AddCSLuaFile() end
+if SERVER then
+    AddCSLuaFile()
+end
 
---easylua.StartWeapon("wowozela")
+-- easylua.StartWeapon("wowozela")
 SWEP.Base = "weapon_base"
 
 SWEP.Author = ""
@@ -28,7 +25,7 @@ SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.Instructions = ""
 SWEP.PrintName = "Wowozela"
---SWEP.Category = "Toys"
+-- SWEP.Category = "Toys"
 
 SWEP.SlotPos = 1
 SWEP.Slot = 1
@@ -60,13 +57,25 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Int", 1, "NoteIndexRight")
 end
 
-function SWEP:PrintWeaponInfo() end
-function SWEP:DrawWeaponSelection() end
-function SWEP:DrawWorldModel() return true end
-function SWEP:CanPrimaryAttack() return false end
-function SWEP:CanSecondaryAttack() return false end
-function SWEP:ShouldDropOnDie() return false end
-function SWEP:Reload() return false end
+function SWEP:PrintWeaponInfo()
+end
+function SWEP:DrawWeaponSelection()
+end
+function SWEP:DrawWorldModel()
+    return true
+end
+function SWEP:CanPrimaryAttack()
+    return false
+end
+function SWEP:CanSecondaryAttack()
+    return false
+end
+function SWEP:ShouldDropOnDie()
+    return false
+end
+function SWEP:Reload()
+    return false
+end
 
 function SWEP:Initialize()
     if self.SetWeaponHoldType then
@@ -116,77 +125,104 @@ function SWEP:GetViewModelPosition(pos, ang)
 end
 
 hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
-    if IsValid(wep) and wep:GetClass() == "wowozela" and (ply:KeyDown(IN_RELOAD) or ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2)) then
+    if IsValid(wep) and wep:GetClass() == "wowozela" and
+        (ply:KeyDown(IN_RELOAD) or ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2)) then
         return true
     end
 end)
 
 if CLIENT then
-    surface.CreateFont(
-        "WowozelaFont",
-        {
-            font		= "Roboto Bk",
-            size		= 35,
-            weight		= 1000,
-        }
-    )
+    surface.CreateFont("WowozelaFont", {
+        font = "Roboto Bk",
+        size = 35,
+        weight = 1000
+    })
 
-    surface.CreateFont(
-        "WowozelaFont2",
-        {
-            font		= "Roboto Bk",
-            size		= 17,
-            weight		= 1000,
-        }
-    )
+    surface.CreateFont("WowozelaFont2", {
+        font = "Roboto Bk",
+        size = 17,
+        weight = 1000
+    })
 
-    surface.CreateFont(
-        "WowozelaTutorial",
-        {
-            font		= "Roboto Bk",
-            size		= 24,
-            weight		= 1000,
-        }
-    )
+    surface.CreateFont("WowozelaTutorial", {
+        font = "Roboto Bk",
+        size = 24,
+        weight = 1000
+    })
 
     local left_mouse_button_tex = Material("gui/lmb.png")
     local right_mouse_button_tex = Material("gui/rmb.png")
 
     local selection = nil
 
-    local function drawCircle( x, y, radius, seg )
+    local function drawCircle(x, y, radius, seg)
         local cir = {}
 
-        table.insert( cir, { x = x, y = y, u = 0.5, v = 0.5 } )
+        table.insert(cir, {
+            x = x,
+            y = y,
+            u = 0.5,
+            v = 0.5
+        })
         for i = 0, seg do
-            local a = math.rad( ( i / seg ) * -360 )
-            table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+            local a = math.rad((i / seg) * -360)
+            table.insert(cir, {
+                x = x + math.sin(a) * radius,
+                y = y + math.cos(a) * radius,
+                u = math.sin(a) / 2 + 0.5,
+                v = math.cos(a) / 2 + 0.5
+            })
         end
 
-        local a = math.rad( 0 ) -- This is needed for non absolute segment counts
-        table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        local a = math.rad(0) -- This is needed for non absolute segment counts
+        table.insert(cir, {
+            x = x + math.sin(a) * radius,
+            y = y + math.cos(a) * radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
 
-        surface.DrawPoly( cir )
+        surface.DrawPoly(cir)
     end
 
     local function drawWedge(cx, cy, inner_radius, outer_radius, start_angle, stop_angle, text, text_color)
         local cir = {}
 
-        local a = math.rad( start_angle )
-        table.insert( cir, { x = cx + math.sin( a ) * inner_radius, y = cy + math.cos( a ) * inner_radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        local a = math.rad(start_angle)
+        table.insert(cir, {
+            x = cx + math.sin(a) * inner_radius,
+            y = cy + math.cos(a) * inner_radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
 
-        a = math.rad( start_angle )
-        table.insert( cir, { x = cx + math.sin( a ) * outer_radius, y = cy + math.cos( a ) * outer_radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        a = math.rad(start_angle)
+        table.insert(cir, {
+            x = cx + math.sin(a) * outer_radius,
+            y = cy + math.cos(a) * outer_radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
 
-        a = math.rad( stop_angle )
-        table.insert( cir, { x = cx + math.sin( a ) * outer_radius, y = cy + math.cos( a ) * outer_radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        a = math.rad(stop_angle)
+        table.insert(cir, {
+            x = cx + math.sin(a) * outer_radius,
+            y = cy + math.cos(a) * outer_radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
 
-        a = math.rad( stop_angle )
-        table.insert( cir, { x = cx + math.sin( a ) * inner_radius, y = cy + math.cos( a ) * inner_radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+        a = math.rad(stop_angle)
+        table.insert(cir, {
+            x = cx + math.sin(a) * inner_radius,
+            y = cy + math.cos(a) * inner_radius,
+            u = math.sin(a) / 2 + 0.5,
+            v = math.cos(a) / 2 + 0.5
+        })
 
         local center_angle = (stop_angle + start_angle) / 2
-        a = math.rad( center_angle )
-        
+        a = math.rad(center_angle)
+
         surface.SetTexture(0)
         surface.DrawPoly(cir)
         local radius = (outer_radius + inner_radius) / 2 - 7
@@ -199,30 +235,20 @@ if CLIENT then
             align = TEXT_ALIGN_RIGHT
         end
 
-        draw.TextShadow( {
+        draw.TextShadow({
             text = text,
             color = text_color,
-            pos = { cx + math.sin( a ) * outer_radius * 1.05, cy + math.cos( a ) * outer_radius * 1.05 },
+            pos = {cx + math.sin(a) * outer_radius * 1.05, cy + math.cos(a) * outer_radius * 1.05},
             xalign = align,
             yalign = TEXT_ALIGN_CENTER,
             font = "WowozelaFont2"
-        }, 2 )
+        }, 2)
 
-        return cx + math.sin( a ) * radius, cy + math.cos( a ) * radius
+        return cx + math.sin(a) * radius, cy + math.cos(a) * radius
     end
 
     function SWEP:LoadPages()
-        self.Categories = {
-            "solo",
-            "guitar",
-            "voices",
-            "bass",
-            "drums",
-            "horn",
-            "animals",
-            "polyphonic",
-            "custom",
-        }
+        self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
 
         for k, v in ipairs(wowozela.Samples) do
             if not table.HasValue(self.Categories, v.category) then
@@ -242,7 +268,7 @@ if CLIENT then
         end
 
         if file.Exists("wowozela_custom_page.txt", "DATA") then
-            for i,v in ipairs(self.Categories) do
+            for i, v in ipairs(self.Categories) do
                 if v == "custom" then
                     self.Pages[i] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
                     break
@@ -276,7 +302,9 @@ if CLIENT then
 
     function SWEP:GetPageNoteIndexLeft()
         local sample = wowozela.Samples[self:GetNoteIndexLeft()]
-        if not sample then return end
+        if not sample then
+            return
+        end
 
         for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
             if sample.path == v.path then
@@ -287,7 +315,9 @@ if CLIENT then
 
     function SWEP:GetPageNoteIndexRight()
         local sample = wowozela.Samples[self:GetNoteIndexRight()]
-        if not sample then return end
+        if not sample then
+            return
+        end
 
         for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
             if sample.path == v.path then
@@ -298,7 +328,9 @@ if CLIENT then
 
     function SWEP:PageIndexToWowozelaIndex(page_index)
         local sample = self.Pages[self.CurrentPageIndex][page_index]
-        if not sample then return end
+        if not sample then
+            return
+        end
 
         for i, v in ipairs(wowozela.Samples) do
             if sample.path == v.path then
@@ -316,8 +348,10 @@ if CLIENT then
         end
         self.preview_csp = CreateSound(LocalPlayer(), path)
         self.preview_csp:PlayEx(0.1, 100)
-        
-        timer.Create("wowozela_preview", 1, 1, function() self.preview_csp:Stop() end)
+
+        timer.Create("wowozela_preview", 1, 1, function()
+            self.preview_csp:Stop()
+        end)
     end
 
     local function draw_hud_text(x, y, hue, text, xalign)
@@ -337,7 +371,7 @@ if CLIENT then
         draw.TextShadow({
             text = text,
             color = HSVToColor(hue, 0.75, 1),
-            pos = { x - w / 2, y - h / 2 },
+            pos = {x - w / 2, y - h / 2},
             font = "WowozelaFont"
         }, 2, 200)
     end
@@ -345,35 +379,34 @@ if CLIENT then
         local _, h = 0, 0
         for i = #lines, 1, -1 do
             local line = lines[i]
-            w, h = draw.TextShadow( {
+            w, h = draw.TextShadow({
                 text = line,
-                pos = { x, y- i * h - 64 },
+                pos = {x, y - i * h - 64},
                 xalign = TEXT_ALIGN_CENTER,
                 yalign = TEXT_ALIGN_BOTTOM,
                 font = "WowozelaTutorial",
                 color = Color(255, 255, 255, 255)
-            }, 2 )
+            }, 2)
         end
     end
 
     local function draw_shadow(x, y, size)
         surface.SetMaterial(circle_tex)
-        surface.SetDrawColor(0,0,0,150)
-        surface.DrawTexturedRect(x-size/2, y-size/2, size, size)        
+        surface.SetDrawColor(0, 0, 0, 150)
+        surface.DrawTexturedRect(x - size / 2, y - size / 2, size, size)
     end
 
     local function draw_mouse_icon(x, y, pressed, offset, tex)
         local icon_size = pressed and 32 or 16
-        local w,h = icon_size, icon_size
-        
+        local w, h = icon_size, icon_size
+
         local offset = offset * (w / 4)
-        
+
         local x, y = x - w / 2, y - h / 2
         surface.SetMaterial(tex)
-        surface.SetDrawColor(255,255,255,255)
-        surface.DrawTexturedRect(x - offset, y, w,h)
+        surface.SetDrawColor(255, 255, 255, 255)
+        surface.DrawTexturedRect(x - offset, y, w, h)
     end
-
 
     local left_down, right_down
     local show_help_text = true
@@ -382,11 +415,10 @@ if CLIENT then
     function SWEP:DrawHelp(center_x)
         local keyName = input.LookupBinding("+menu", true) or "<+menu not bound>"
 
-        draw_lines(center_x, ScrH() , {
-            "select a voice with your left or right mouse button",
-            "find more samples by clicking < or >",
-            self.Categories[self.CurrentPageIndex] == "custom" and ("press " .. keyName ..  " while hovering over a sample to reassign it") or nil,
-        })
+        draw_lines(center_x, ScrH(),
+            {"select a voice with your left or right mouse button", "find more samples by clicking < or >",
+             self.Categories[self.CurrentPageIndex] == "custom" and
+                ("press " .. keyName .. " while hovering over a sample to reassign it") or nil})
     end
 
     function SWEP:DrawHUD()
@@ -422,9 +454,8 @@ if CLIENT then
         local in_menu = self:GetOwner():KeyDown(IN_RELOAD)
 
         if show_help_text then
-            draw_lines(center_x, ScrH() , {
-                "to select different sounds, hold " .. (input.LookupBinding("+reload", true) or "<+reload not bound>"),
-            })
+            draw_lines(center_x, ScrH(), {"to select different sounds, hold " ..
+                (input.LookupBinding("+reload", true) or "<+reload not bound>")})
         end
 
         if in_menu then
@@ -440,7 +471,7 @@ if CLIENT then
 
             local radians = math.atan2(mouse_y - center_y, center_x - mouse_x)
             local degrees = (math.deg(radians) - 90) % 360
-            local wedge_step = 360/max
+            local wedge_step = 360 / max
             local hovered_wedge_index = nil
             local mouse_far_enough = (Vector(center_x, center_y) - Vector(mouse_x, mouse_y)):Length2D()
 
@@ -452,14 +483,14 @@ if CLIENT then
             surface.SetDrawColor(Color(100, 100, 100, 75))
             drawCircle(center_x, center_y, 36, 10)
 
-            draw.TextShadow( {
+            draw.TextShadow({
                 text = self.Categories[self.CurrentPageIndex],
-                pos = { center_x, center_y },
+                pos = {center_x, center_y},
                 xalign = TEXT_ALIGN_CENTER,
                 yalign = TEXT_ALIGN_CENTER,
                 font = "WowozelaFont2",
                 color = Color(255, 255, 255, 255)
-            }, 2 )
+            }, 2)
 
             self:DrawHelp(center_x)
 
@@ -472,8 +503,9 @@ if CLIENT then
                 local wedge_size = ((index - 1) / max)
                 local wedge_angle = wedge_size * 360
 
-                local col = page_index and HSVToColor((page_index / #wowozela.Samples) * 360, 0.75, 1) or Color(255, 255, 255, 255)
-                
+                local col = page_index and HSVToColor((page_index / #wowozela.Samples) * 360, 0.75, 1) or
+                                Color(255, 255, 255, 255)
+
                 local is_hovering = false
 
                 if degrees >= wedge_angle and degrees <= (wedge_angle + wedge_step) and mouse_far_enough then
@@ -488,25 +520,29 @@ if CLIENT then
                     is_hovering = true
                 end
 
-                local wedge_name = tostring(self.Pages[self.CurrentPageIndex][index] and self.Pages[self.CurrentPageIndex][index].name or "(unassigned)")
+                local wedge_name = tostring(self.Pages[self.CurrentPageIndex][index] and
+                                                self.Pages[self.CurrentPageIndex][index].name or "(unassigned)")
 
                 surface.SetDrawColor(col)
-                local x, y = drawWedge(center_x, center_y, 130, is_hovering and 150 or 140, wedge_angle, wedge_angle + wedge_step, wedge_name, is_hovering and col or nil)
+                local x, y = drawWedge(center_x, center_y, 130, is_hovering and 150 or 140, wedge_angle,
+                                 wedge_angle + wedge_step, wedge_name, is_hovering and col or nil)
 
                 col.a = 50
                 surface.SetDrawColor(col)
                 drawWedge(center_x, center_y, 36, 130, wedge_angle, wedge_angle + wedge_step, "")
 
                 if left_selected or right_selected then
-                    draw_shadow(x,y, 64)
+                    draw_shadow(x, y, 64)
                 end
 
                 if left_selected then
-                    draw_mouse_icon(x, y, left_down, not (left_selected and right_selected) and 0 or 1, left_mouse_button_tex)
+                    draw_mouse_icon(x, y, left_down, not (left_selected and right_selected) and 0 or 1,
+                        left_mouse_button_tex)
                 end
 
                 if right_selected then
-                    draw_mouse_icon(x, y, right_down, not (left_selected and right_selected) and 0 or -1, right_mouse_button_tex)
+                    draw_mouse_icon(x, y, right_down, not (left_selected and right_selected) and 0 or -1,
+                        right_mouse_button_tex)
                 end
             end
 
@@ -531,14 +567,14 @@ if CLIENT then
                     right_pressed = right_down,
                     index = hovered_wedge_index,
                     page = self.CurrentPageIndex,
-                    name = self.Pages[self.CurrentPageIndex][hovered_wedge_index] and  self.Pages[self.CurrentPageIndex][hovered_wedge_index].name
+                    name = self.Pages[self.CurrentPageIndex][hovered_wedge_index] and
+                        self.Pages[self.CurrentPageIndex][hovered_wedge_index].name
                 }
             else
                 selection = nil
             end
 
-
-            surface.SetDrawColor(255,255,255,255)
+            surface.SetDrawColor(255, 255, 255, 255)
             surface.SetMaterial(arrow_left_tex)
 
             local s = 32
@@ -551,7 +587,6 @@ if CLIENT then
             local hover_right = mouse_x > right_x - s / 2
 
             surface.SetMaterial(arrow_left_tex)
-
 
             do
                 local s = hover_left and s * 1.5 or s
@@ -569,8 +604,8 @@ if CLIENT then
                 surface.DrawTexturedRectRotated(right_x, center_y, s, s, 45 + 180)
             end
 
-            --surface.DrawTexturedRectRotated(left_x, center_y, w, h, 0)
-            --surface.DrawTexturedRectRotated(right_x, center_y, w, h, 180)
+            -- surface.DrawTexturedRectRotated(left_x, center_y, w, h, 0)
+            -- surface.DrawTexturedRectRotated(right_x, center_y, w, h, 180)
 
             if hover_left and left_pressed then
                 self.CurrentPageIndex = self.CurrentPageIndex - 1
@@ -608,12 +643,7 @@ if CLIENT then
                 offset = -hud_distance
             end
 
-            draw_hud_text(
-                ScrW() / 2 + offset,
-                ScrH() / 2,
-                left_hue,
-                tostring(self:GetNoteNameLeft())
-            )
+            draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, left_hue, tostring(self:GetNoteNameLeft()))
         end
 
         if right_down and not in_menu then
@@ -624,34 +654,21 @@ if CLIENT then
                 offset = hud_distance
             end
 
-            draw_hud_text(
-                ScrW() / 2 + offset,
-                ScrH() / 2,
-                right_hue,
-                tostring(self:GetNoteNameRight()),
-                TEXT_ALIGN_RIGHT
-            )
+            draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, right_hue, tostring(self:GetNoteNameRight()),
+                TEXT_ALIGN_RIGHT)
         end
-
 
         local vol = GetConVar("wowozela_volume")
         if vol and vol:GetFloat() <= 0.01 then
-            draw.SimpleText(
-                "Warning your wowozela_volume is set to 0!",
-                "WowozelaFont",
-                center_x,
-                ScrH() - 10,
-                Color(255, 255, 255, 150),
-                TEXT_ALIGN_CENTER,
-                TEXT_ALIGN_BOTTOM
-            )
+            draw.SimpleText("Warning your wowozela_volume is set to 0!", "WowozelaFont", center_x, ScrH() - 10,
+                Color(255, 255, 255, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
         end
     end
 
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
         if IsValid(wep) and wep:GetClass() == "wowozela" then
-        if ply:KeyDown(IN_RELOAD) and bind:find("+menu") and pressed then
+            if ply:KeyDown(IN_RELOAD) and bind:find("+menu") and pressed then
                 if selection then
                     local selection = table.Copy(selection)
 
@@ -668,7 +685,8 @@ if CLIENT then
                                 done[data.path] = true
                                 submenus[data.category]:AddOption(data.name, function()
                                     wep.Pages[selection.page][selection.index] = data
-                                    file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection.page], true))
+                                    file.Write("wowozela_custom_page.txt",
+                                        util.TableToJSON(wep.Pages[selection.page], true))
                                     wep:LoadPages()
                                     play_non_looping_sound(wep, data.path)
                                 end)
@@ -680,14 +698,16 @@ if CLIENT then
                     freeze_mouse = {
                         ref = Menu,
                         x = gui.MouseX(),
-                        y = gui.MouseY(),
+                        y = gui.MouseY()
                     }
                 end
                 return true
             end
             local num = tonumber(bind:match("slot(%d+)"))
             if num and pressed then
-                if num == 0 then num = 10 end
+                if num == 0 then
+                    num = 10
+                end
 
                 if wep.Pages[num] then
                     wep.CurrentPageIndex = num
