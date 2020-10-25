@@ -3,16 +3,6 @@ local SWEP = _G.SWEP or {
     Secondary = {}
 }
 
-if wowozela == nil then
-    wowozela = {}
-
-    wowozela.ValidNotes = {
-        ["Left"] = IN_ATTACK,
-        ["Right"] = IN_ATTACK2
-    }
-
-    wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
-end
 if SERVER then
     AddCSLuaFile()
 end
@@ -59,8 +49,15 @@ end
 
 function SWEP:PrintWeaponInfo()
 end
-function SWEP:DrawWeaponSelection()
+
+local mat = Material("particle/fire")
+
+function SWEP:DrawWeaponSelection(x,y,w,h,a) 		
+    surface.SetDrawColor(HSVToColor(RealTime()*10, 1, 1))
+    surface.SetMaterial(mat)
+    surface.DrawTexturedRect(x,y-w/6,w,w)
 end
+
 function SWEP:DrawWorldModel()
     return true
 end
@@ -91,14 +88,102 @@ if SERVER then
     function SWEP:OnDrop()
         self:Remove()
     end
+
+    util.AddNetworkString("wowozela_pitch")
+
+    net.Receive("wowozela_pitch", function(len, ply) 
+        ply.net_incoming_rate_count = nil
+        ply.net_incoming_rate_count = nil
+
+        local pitch = net.ReadFloat()
+
+        ply.wowozela_real_pitch = pitch
+
+        net.Start("wowozela_pitch", true)
+            net.WriteEntity(ply)
+            net.WriteFloat(pitch)
+        net.SendOmit(ply)
+    end)
+end
+
+if CLIENT then
+    net.Receive("wowozela_pitch", function(len, ply) 
+        local ply = net.ReadEntity()
+        if not ply:IsValid() then return end
+        local pitch = net.ReadFloat()
+
+        ply.wowozela_real_pitch = pitch      
+    end)
+end
+
+local DisableUnlimitedPitch
+local EnableUnlimitedPitch
+
+if CLIENT then
+    function DisableUnlimitedPitch(ply)
+
+        if ply.wowozela_head_cb then
+            ply:RemoveCallback("BuildBonePositions", ply.wowozela_head_cb)
+            ply.wowozela_head_cb = nil
+        end
+    end
+
+    function EnableUnlimitedPitch(ply)
+
+        if not ply.wowozela_sampler then return end
+    
+        if not ply.wowozela_head_cb then
+            ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(ply)
+                local head = ply:LookupBone("ValveBiped.Bip01_Head1")
+
+                if head then
+                    local m = ply:GetBoneMatrix(head)
+                    if m then
+                        local pitch = math.NormalizeAngle(ply.wowozela_sampler:GetPlayerPitch()*-89)
+                        local yaw = ply:EyeAngles().y
+
+                        local vec = Angle(pitch, yaw):Forward() * 100
+
+                        local ang = vec:AngleEx(Vector(0,0,-1)) + Angle(-90,0,-90)
+
+                        if pitch > 90 then
+                            ang.y = ang.y - 180
+                            ang.p = -ang.p
+                        elseif pitch < -90 then
+                            ang.y = ang.y - 180
+                            ang.p = -ang.p
+                        end
+
+
+                        m:SetAngles(ang)
+                        ply:SetBoneMatrix(head, m)
+                    end
+                end
+            end)
+        end
+
+    end
 end
 
 function SWEP:Deploy()
     self.Think = self._Think
+    if CLIENT then
+        self:LoadPages()
+    end
+
     return true
 end
 
 function SWEP:Holster()
+    if CLIENT then
+        local ply = self:GetOwner()
+
+        if ply.wowozela_head_cb then
+            ply:RemoveCallback("BuildBonePositions", ply.wowozela_head_cb)
+            ply.wowozela_head_cb = nil
+        end
+    end
+
     if not self:GetOwner():KeyDown(IN_RELOAD) then
         return true
     end
@@ -248,9 +333,14 @@ if CLIENT then
     end
 
     function SWEP:LoadPages()
+
+        if not wowozela.GetSample(1) then
+            return
+        end
+
         self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
 
-        for k, v in ipairs(wowozela.Samples) do
+        for k, v in ipairs(wowozela.GetSamples()) do
             if not table.HasValue(self.Categories, v.category) then
                 table.insert(self.Categories, v.category)
             end
@@ -260,7 +350,7 @@ if CLIENT then
 
         for i, category in ipairs(self.Categories) do
             self.Pages[i] = {}
-            for k, v in ipairs(wowozela.Samples) do
+            for k, v in ipairs(wowozela.GetSamples()) do
                 if v.category == category then
                     table.insert(self.Pages[i], v)
                 end
@@ -289,19 +379,19 @@ if CLIENT then
     end
 
     function SWEP:GetNoteNameRight()
-        local sample = wowozela.Samples[self:GetNoteIndexRight()]
+        local sample = wowozela.GetSample(self:GetNoteIndexRight())
 
         return sample and sample.name
     end
 
     function SWEP:GetNoteNameLeft()
-        local sample = wowozela.Samples[self:GetNoteIndexLeft()]
+        local sample = wowozela.GetSample(self:GetNoteIndexLeft())
 
         return sample and sample.name
     end
 
     function SWEP:GetPageNoteIndexLeft()
-        local sample = wowozela.Samples[self:GetNoteIndexLeft()]
+        local sample = wowozela.GetSample(self:GetNoteIndexLeft())
         if not sample then
             return
         end
@@ -314,7 +404,7 @@ if CLIENT then
     end
 
     function SWEP:GetPageNoteIndexRight()
-        local sample = wowozela.Samples[self:GetNoteIndexRight()]
+        local sample = wowozela.GetSample(self:GetNoteIndexRight())
         if not sample then
             return
         end
@@ -327,12 +417,13 @@ if CLIENT then
     end
 
     function SWEP:PageIndexToWowozelaIndex(page_index)
+
         local sample = self.Pages[self.CurrentPageIndex][page_index]
         if not sample then
             return
         end
 
-        for i, v in ipairs(wowozela.Samples) do
+        for i, v in ipairs(wowozela.GetSamples()) do
             if sample.path == v.path then
                 return i
             end
@@ -438,19 +529,20 @@ if CLIENT then
         local time = RealTime()
 
         if input.IsMouseDown(MOUSE_LEFT) then
-            left_down = left_down or RealTime()
+            left_down = left_down or time
         else
             left_down = nil
         end
 
         if input.IsMouseDown(MOUSE_RIGHT) then
-            right_down = right_down or RealTime()
+            right_down = right_down or time
         else
             right_down = nil
         end
 
         local left_pressed = left_down == time
         local right_pressed = right_down == time
+
         local in_menu = self:GetOwner():KeyDown(IN_RELOAD)
 
         if show_help_text then
@@ -503,7 +595,7 @@ if CLIENT then
                 local wedge_size = ((index - 1) / max)
                 local wedge_angle = wedge_size * 360
 
-                local col = page_index and HSVToColor((page_index / #wowozela.Samples) * 360, 0.75, 1) or
+                local col = page_index and HSVToColor((page_index / #wowozela.GetSamples()) * 360, 0.75, 1) or
                                 Color(255, 255, 255, 255)
 
                 local is_hovering = false
@@ -547,16 +639,16 @@ if CLIENT then
             end
 
             if left_down or right_down then
-                local noteIndex = self:PageIndexToWowozelaIndex(hovered_wedge_index)
-                if noteIndex then
+                local sample_index = self:PageIndexToWowozelaIndex(hovered_wedge_index)
+                if sample_index then
                     if left_pressed then
-                        play_non_looping_sound(self, wowozela.Samples[noteIndex].path)
-                        wowozela.SetSampleIndexLeft(noteIndex)
+                        play_non_looping_sound(self, wowozela.GetSample(sample_index).path)
+                        wowozela.SetSampleIndexLeft(sample_index)
                     end
 
                     if right_pressed then
-                        play_non_looping_sound(self, wowozela.Samples[noteIndex].path)
-                        wowozela.SetSampleIndexRight(noteIndex)
+                        play_non_looping_sound(self, wowozela.GetSample(sample_index).path)
+                        wowozela.SetSampleIndexRight(sample_index)
                     end
                 end
             end
@@ -630,32 +722,35 @@ if CLIENT then
             end
         end
 
-        local hud_distance = 128
+        if not LocalPlayer():ShouldDrawLocalPlayer() then
 
-        local left_hue = (self:GetNoteIndexLeft() / #wowozela.Samples) * 360
-        local right_hue = (self:GetNoteIndexRight() / #wowozela.Samples) * 360
+            local hud_distance = 128
 
-        if left_down and not in_menu then
+            local left_hue = (self:GetNoteIndexLeft() / #wowozela.GetSamples()) * 360
+            local right_hue = (self:GetNoteIndexRight() / #wowozela.GetSamples()) * 360
 
-            local offset = 0
+            if left_down and not in_menu then
 
-            if right_down and left_down then
-                offset = -hud_distance
+                local offset = 0
+
+                if right_down and left_down then
+                    offset = -hud_distance
+                end
+
+                draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, left_hue, tostring(self:GetNoteNameLeft()))
             end
 
-            draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, left_hue, tostring(self:GetNoteNameLeft()))
-        end
+            if right_down and not in_menu then
 
-        if right_down and not in_menu then
+                local offset = 0
 
-            local offset = 0
+                if right_down and left_down then
+                    offset = hud_distance
+                end
 
-            if right_down and left_down then
-                offset = hud_distance
+                draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, right_hue, tostring(self:GetNoteNameRight()),
+                    TEXT_ALIGN_RIGHT)
             end
-
-            draw_hud_text(ScrW() / 2 + offset, ScrH() / 2, right_hue, tostring(self:GetNoteNameRight()),
-                TEXT_ALIGN_RIGHT)
         end
 
         local vol = GetConVar("wowozela_volume")
@@ -664,6 +759,87 @@ if CLIENT then
                 Color(255, 255, 255, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
         end
     end
+
+    timer.Create("wowozela_head_turn", 0.1, 0, function() 
+        for _, ply in ipairs(player.GetAll()) do
+            local wep = ply:GetActiveWeapon()
+            if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
+                DisableUnlimitedPitch(ply)
+            else
+                EnableUnlimitedPitch(ply)
+            end
+        end
+    end)
+
+    local cx, cy = 0, 0
+    local upsidedown = false
+
+    hook.Add("InputMouseApply", "wowozela_unlocked_pitch", function(cmd, x, y, ang)
+        local ply = LocalPlayer()
+        local wep = ply:GetActiveWeapon()
+        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
+            DisableUnlimitedPitch(ply)
+            return
+        end
+
+        EnableUnlimitedPitch(ply)
+
+        local sensitivity = GetConVarNumber("sensitivity")
+
+        if upsidedown then
+            x = -x 
+        end
+
+        cx = cx + x / sensitivity / 5
+        cy = cy + y / sensitivity / 5
+
+        local cy = cy
+        if ply:KeyDown(IN_SPEED) then
+            cy = cy / 90 -- -1 to 1
+            cy = (cy + 1) / 2 -- 0 to 1
+            cy = cy * 12 -- 0 to 12
+            cy = math.Round(cy * 2) / 2 -- rounded
+            cy = cy / 12
+            cy = (cy * 2) - 1
+
+            cy = cy * 90
+        end
+
+
+        local ang = Angle(cy, -cx, ang.r)
+        ang.p = math.NormalizeAngle(ang.p)
+        
+        local max = GetConVarNumber("cl_pitchup")
+        local min = GetConVarNumber("cl_pitchdown")
+
+        if ang.p >= max then
+            upsidedown = true
+        elseif ang.p <= -min then
+            upsidedown = true
+        else
+            upsidedown = false
+        end
+
+        local pitch_offset = Angle(0,0,0)
+
+        if upsidedown then
+            ang.p = math.NormalizeAngle(ang.p + 180)
+            pitch_offset.p = -180
+            pitch_offset.y = 0
+        end
+
+        cmd:SetViewAngles(ang + pitch_offset)
+
+        if ply.wowozela_real_pitch ~= cy then 
+            net.Start("wowozela_pitch", true)
+            net.WriteFloat(cy)
+            net.SendToServer()            
+            --print("sending")
+            ply.wowozela_real_pitch = cy
+        end
+
+        return true
+    end)
 
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
@@ -675,12 +851,12 @@ if CLIENT then
                     local Menu = DermaMenu()
                     local submenus = {}
                     local done = {}
-                    for _, data in pairs(wowozela.Samples) do
+                    for _, data in pairs(wowozela.GetSamples()) do
                         local category = data.category
 
                         submenus[category] = submenus[category] or Menu:AddSubMenu(category)
 
-                        for _, data in pairs(wowozela.Samples) do
+                        for _, data in pairs(wowozela.GetSamples()) do
                             if data.category == category and not done[data.path] then
                                 done[data.path] = true
                                 submenus[data.category]:AddOption(data.name, function()
@@ -709,7 +885,7 @@ if CLIENT then
                     num = 10
                 end
 
-                if wep.Pages[num] then
+                if wep.Pages and wep.Pages[num] then
                     wep.CurrentPageIndex = num
                 end
                 return true
