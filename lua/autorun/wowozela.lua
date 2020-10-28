@@ -60,6 +60,11 @@ if CLIENT then
 
         for _, ply in ipairs(player.GetAll()) do
             if ply.wowozela_sampler then
+                for _,v in pairs(ply.wowozela_sampler.Samples or {}) do
+                    if v.obj then
+                        v.obj:Stop()
+                    end
+                end
                 wowozela.CreateSampler(ply)
             end
             local wep = ply:GetActiveWeapon()
@@ -231,15 +236,20 @@ do -- sample meta
         return false
     end
 
-    local function create_sound(path, self)
+    local function create_sound(path, sampler)
+        if SERVER then return end
         local ref = {}
 
         sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
+            if errnum then
+                print(path, err)
+            end
             if snd then
+                ref.paused = true
                 ref.obj = snd
                 snd:EnableLooping(true)
 
-                if self.Player == LocalPlayer() then
+                if sampler.Player == LocalPlayer() then
                     snd:Set3DEnabled(false)
                 else
                     snd:Set3DEnabled(true)
@@ -250,27 +260,37 @@ do -- sample meta
         return ref
     end
 
-    local function set_volume(snd, num, self)
+    local function set_volume(snd, num, sampler)
         if not IsValid(snd.obj) then return end
-        snd.obj:SetVolume(num)
-        snd.obj:SetPos(self.Player:EyePos(), self.Player:GetAimVector())
+        if snd.paused then return end
+
+        snd.obj:SetVolume(num * (wowozela.intvolume or 1))
+        snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
     end
 
-    local function set_pitch(snd, num, self)
+    local function set_pitch(snd, num, sampler)
         if not IsValid(snd.obj) then return end
-        snd.obj:SetPlaybackRate(num/100)
-        snd.obj:SetPos(self.Player:EyePos(), self.Player:GetAimVector())
+        if snd.paused then return end
+
+        snd.obj:SetPlaybackRate(num / 100)
+        snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
     end
 
-    local function stop_sound(snd, self)
+    local function stop_sound(snd, sampler)
         if not IsValid(snd.obj) then return end
+        if snd.paused then return end
+
         snd.obj:Pause()
         snd.obj:SetTime(0)
+        snd.paused = true
     end
 
-    local function play_sound(snd, self)
+    local function play_sound(snd, sampler)
         if not IsValid(snd.obj) then return end
+        if not snd.paused then return end
+
         snd.obj:Play()
+        snd.paused = false
     end
 
     function META:SetSample(i, path)
@@ -281,10 +301,10 @@ do -- sample meta
         num = num or 1
 
         if self:IsKeyDown(IN_WALK) then
-            num = num - 7/12
+            num = num - 7 / 12
         end
 
-        self.Pitch = math.floor(100 * 2 ^ num)--, 1, 255)
+        self.Pitch = math.floor(100 * 2 ^ num) --, 1, 255)
 
         for _, sample in pairs(self.Samples) do
             set_pitch(sample, self.Pitch, self)
@@ -332,7 +352,7 @@ do -- sample meta
         if key then
             for k,v in pairs(self.KeyToSample) do
                 if v == sample and key ~= k then
-                    
+
                     stop_sound(sample, self)
                     play_sound(sample, self)
 
@@ -411,7 +431,9 @@ do -- sample meta
 
         if wowozela.disabled then
             for _, csp in pairs(self.Samples) do
-                stop_sound(csp, self)
+                if not csp.paused then
+                    stop_sound(csp, self)
+                end
             end
             return
         end
@@ -420,7 +442,7 @@ do -- sample meta
     local emitter
     local function fade_in(p)
         local f = p:GetLifeTime()
-        p:SetStartSize((p:GetRoll() * (f ^ 0.25)))
+        p:SetStartSize(p:GetRoll() * (f ^ 0.25))
         if f < 1 then
             p:SetNextThink(CurTime())
         end
@@ -436,7 +458,9 @@ do -- sample meta
 
         local fft = {}
         for _, sample in pairs(self.KeyToSample) do
-            sample.obj:FFT(fft, 1)
+            if sample.obj then
+                sample.obj:FFT(fft, 1)
+            end
         end
 
 
@@ -449,7 +473,7 @@ do -- sample meta
 
         local particle = emitter:Add("particle/fire", self:GetPos() + forward * scale)
 
-     
+
         if particle then
             local col = HSVToColor(pitch * 2.55, self.Volume, 1)
             particle:SetColor(col.r, col.g, col.b, self.Volume)
@@ -472,7 +496,7 @@ do -- sample meta
             particle:SetStartSize(0)
             particle:SetEndSize(s)
             particle:SetRoll(s)
-            
+
             particle:SetStartAlpha(255 * self.Volume)
             particle:SetEndAlpha(0)
 

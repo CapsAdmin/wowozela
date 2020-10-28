@@ -52,10 +52,10 @@ end
 
 local mat = Material("particle/fire")
 
-function SWEP:DrawWeaponSelection(x,y,w,h,a) 		
-    surface.SetDrawColor(HSVToColor(RealTime()*10, 1, 1))
+function SWEP:DrawWeaponSelection(x,y,w,h,a)
+    surface.SetDrawColor(HSVToColor(RealTime() * 10, 1, 1))
     surface.SetMaterial(mat)
-    surface.DrawTexturedRect(x,y-w/6,w,w)
+    surface.DrawTexturedRect(x,y-w / 6,w,w)
 end
 
 function SWEP:DrawWorldModel()
@@ -91,7 +91,7 @@ if SERVER then
 
     util.AddNetworkString("wowozela_pitch")
 
-    net.Receive("wowozela_pitch", function(len, ply) 
+    net.Receive("wowozela_pitch", function(len, ply)
         ply.net_incoming_rate_count = nil
         ply.net_incoming_rate_count = nil
 
@@ -107,12 +107,12 @@ if SERVER then
 end
 
 if CLIENT then
-    net.Receive("wowozela_pitch", function(len, ply) 
+    net.Receive("wowozela_pitch", function(len, ply)
         local ply = net.ReadEntity()
         if not ply:IsValid() then return end
         local pitch = net.ReadFloat()
 
-        ply.wowozela_real_pitch = pitch      
+        ply.wowozela_real_pitch = pitch
     end)
 end
 
@@ -131,7 +131,7 @@ if CLIENT then
     function EnableUnlimitedPitch(ply)
 
         if not ply.wowozela_sampler then return end
-    
+
         if not ply.wowozela_head_cb then
             ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(ply)
                 local head = ply:LookupBone("ValveBiped.Bip01_Head1")
@@ -139,7 +139,7 @@ if CLIENT then
                 if head then
                     local m = ply:GetBoneMatrix(head)
                     if m then
-                        local pitch = math.NormalizeAngle(ply.wowozela_sampler:GetPlayerPitch()*-89)
+                        local pitch = math.NormalizeAngle(ply.wowozela_sampler:GetPlayerPitch() * -89)
                         local yaw = ply:EyeAngles().y
 
                         local vec = Angle(pitch, yaw):Forward() * 100
@@ -760,7 +760,7 @@ if CLIENT then
         end
     end
 
-    timer.Create("wowozela_head_turn", 0.1, 0, function() 
+    timer.Create("wowozela_head_turn", 0.1, 0, function()
         for _, ply in ipairs(player.GetAll()) do
             local wep = ply:GetActiveWeapon()
             if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
@@ -787,7 +787,7 @@ if CLIENT then
         local sensitivity = GetConVarNumber("sensitivity")
 
         if upsidedown then
-            x = -x 
+            x = -x
         end
 
         cx = cx + x / sensitivity / 5
@@ -808,7 +808,7 @@ if CLIENT then
 
         local ang = Angle(cy, -cx, ang.r)
         ang.p = math.NormalizeAngle(ang.p)
-        
+
         local max = GetConVarNumber("cl_pitchup")
         local min = GetConVarNumber("cl_pitchdown")
 
@@ -830,10 +830,10 @@ if CLIENT then
 
         cmd:SetViewAngles(ang + pitch_offset)
 
-        if ply.wowozela_real_pitch ~= cy then 
+        if ply.wowozela_real_pitch ~= cy then
             net.Start("wowozela_pitch", true)
             net.WriteFloat(cy)
-            net.SendToServer()            
+            net.SendToServer()
             --print("sending")
             ply.wowozela_real_pitch = cy
         end
@@ -843,42 +843,39 @@ if CLIENT then
 
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
-        if IsValid(wep) and wep:GetClass() == "wowozela" then
-            if ply:KeyDown(IN_RELOAD) and bind:find("+menu") and pressed then
-                if selection then
-                    local selection = table.Copy(selection)
+        if IsValid(wep) and wep:GetClass() == "wowozela" and ply:KeyDown(IN_RELOAD) then
+            local selection = table.Copy(selection)
+            if bind:find("+menu") and pressed and selection then
+                local Menu = DermaMenu()
+                local submenus = {}
+                local done = {}
+                for _, data in pairs(wowozela.GetSamples()) do
+                    local category = data.category
 
-                    local Menu = DermaMenu()
-                    local submenus = {}
-                    local done = {}
+                    submenus[category] = submenus[category] or Menu:AddSubMenu(category)
+
                     for _, data in pairs(wowozela.GetSamples()) do
-                        local category = data.category
-
-                        submenus[category] = submenus[category] or Menu:AddSubMenu(category)
-
-                        for _, data in pairs(wowozela.GetSamples()) do
-                            if data.category == category and not done[data.path] then
-                                done[data.path] = true
-                                submenus[data.category]:AddOption(data.name, function()
-                                    wep.Pages[selection.page][selection.index] = data
-                                    file.Write("wowozela_custom_page.txt",
-                                        util.TableToJSON(wep.Pages[selection.page], true))
-                                    wep:LoadPages()
-                                    play_non_looping_sound(wep, data.path)
-                                end)
-                            end
+                        if data.category == category and not done[data.path] then
+                            done[data.path] = true
+                            submenus[data.category]:AddOption(data.name, function()
+                                wep.Pages[selection.page][selection.index] = data
+                                file.Write("wowozela_custom_page.txt",
+                                    util.TableToJSON(wep.Pages[selection.page], true))
+                                wep:LoadPages()
+                                play_non_looping_sound(wep, data.path)
+                            end)
                         end
                     end
-                    Menu:Open()
-
-                    freeze_mouse = {
-                        ref = Menu,
-                        x = gui.MouseX(),
-                        y = gui.MouseY()
-                    }
                 end
-                return true
+                Menu:Open()
+
+                freeze_mouse = {
+                    ref = Menu,
+                    x = gui.MouseX(),
+                    y = gui.MouseY()
+                }
             end
+
             local num = tonumber(bind:match("slot(%d+)"))
             if num and pressed then
                 if num == 0 then
@@ -888,8 +885,8 @@ if CLIENT then
                 if wep.Pages and wep.Pages[num] then
                     wep.CurrentPageIndex = num
                 end
-                return true
             end
+            return true
         end
     end)
 end
