@@ -262,7 +262,6 @@ do -- sample meta
 
     local function set_volume(snd, num, sampler)
         if not IsValid(snd.obj) then return end
-        if snd.paused then return end
 
         snd.obj:SetVolume(num * (wowozela.intvolume or 1))
         snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
@@ -270,7 +269,6 @@ do -- sample meta
 
     local function set_pitch(snd, num, sampler)
         if not IsValid(snd.obj) then return end
-        if snd.paused then return end
 
         snd.obj:SetPlaybackRate(num / 100)
         snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
@@ -290,6 +288,8 @@ do -- sample meta
         if not snd.paused then return end
 
         snd.obj:Play()
+        snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
+
         snd.paused = false
     end
 
@@ -303,19 +303,24 @@ do -- sample meta
         if self:IsKeyDown(IN_WALK) then
             num = num - 7 / 12
         end
-
+        local lastPitch = self.Pitch
         self.Pitch = math.floor(100 * 2 ^ num) --, 1, 255)
 
-        for _, sample in pairs(self.Samples) do
-            set_pitch(sample, self.Pitch, self)
+        if lastPitch ~= self.Pitch then
+            for _, sample in ipairs(self.Samples) do
+                set_pitch(sample, self.Pitch, self)
+            end
         end
     end
 
     function META:SetVolume(num)
+        local lastVol = self.Volume
         self.Volume = math.Clamp(num or self.Volume, 0.0001, 1)
 
-        for _, sample in pairs(self.Samples) do
-            set_volume(sample, self.Volume, self)
+        if lastVol ~= self.Volume then
+            for _, sample in ipairs(self.Samples) do
+                set_volume(sample, self.Volume, self)
+            end
         end
     end
 
@@ -348,7 +353,6 @@ do -- sample meta
         end
 
         if sample == self.last_sample then return end
-
         if key then
             for k,v in pairs(self.KeyToSample) do
                 if v == sample and key ~= k then
@@ -404,12 +408,19 @@ do -- sample meta
 
     function META:Think()
         if not self:CanPlay() then
-            for _, csp in pairs(self.Samples) do
-                stop_sound(csp, self)
+            if self.WasPlaying then
+                for _, csp in ipairs(self.Samples) do
+                    if not csp.paused then
+                        stop_sound(csp, self)
+                    end
+                end
+                self.WasPlaying = false
             end
             return
         end
 
+
+        self.WasPlaying = true
         local ang = self:GetAngles()
 
         if self:IsKeyDown(IN_USE) then
@@ -430,7 +441,7 @@ do -- sample meta
         end
 
         if wowozela.disabled then
-            for _, csp in pairs(self.Samples) do
+            for _, csp in ipairs(self.Samples) do
                 if not csp.paused then
                     stop_sound(csp, self)
                 end
@@ -535,12 +546,12 @@ do -- hooks
         end
 
         if CLIENT then
-            local vol = wowozela.volume:GetFloat()
-            wowozela.intvolume = math.Clamp(vol, 0.01, 1)
-            wowozela.disabled = vol <= 0.01
+            --local vol = wowozela.volume:GetFloat()
+            --wowozela.intvolume = math.Clamp(vol, 0.01, 1)
+            --wowozela.disabled = vol <= 0.01
         end
 
-        for key, ply in pairs(player.GetAll()) do
+        for _, ply in ipairs(player.GetAll()) do
             local sampler = wowozela.GetSampler(ply)
 
             if not sampler then
