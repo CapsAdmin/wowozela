@@ -107,7 +107,7 @@ if SERVER then
 end
 
 if CLIENT then
-    net.Receive("wowozela_pitch", function(len, ply)
+    net.Receive("wowozela_pitch", function(len)
         local ply = net.ReadEntity()
         if not ply:IsValid() then return end
         local pitch = net.ReadFloat()
@@ -133,14 +133,14 @@ if CLIENT then
         if not ply.wowozela_sampler then return end
 
         if not ply.wowozela_head_cb then
-            ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(ply)
-                local head = ply:LookupBone("ValveBiped.Bip01_Head1")
+            ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(oply)
+                local head = oply:LookupBone("ValveBiped.Bip01_Head1")
 
                 if head then
-                    local m = ply:GetBoneMatrix(head)
+                    local m = oply:GetBoneMatrix(head)
                     if m then
-                        local pitch = math.NormalizeAngle(ply.wowozela_sampler:GetPlayerPitch() * -89)
-                        local yaw = ply:EyeAngles().y
+                        local pitch = math.NormalizeAngle(oply.wowozela_sampler:GetPlayerPitch() * -89)
+                        local yaw = oply:EyeAngles().y
 
                         local vec = Angle(pitch, yaw):Forward() * 100
 
@@ -216,6 +216,8 @@ hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
     end
 end)
 
+local selection = nil
+
 if CLIENT then
     surface.CreateFont("WowozelaFont", {
         font = "Roboto Bk",
@@ -238,7 +240,7 @@ if CLIENT then
     local left_mouse_button_tex = Material("gui/lmb.png")
     local right_mouse_button_tex = Material("gui/rmb.png")
 
-    local selection = nil
+
 
     local function drawCircle(x, y, radius, seg)
         local cir = {}
@@ -489,14 +491,14 @@ if CLIENT then
 
     local function draw_mouse_icon(x, y, pressed, offset, tex)
         local icon_size = pressed and 32 or 16
-        local w, h = icon_size, icon_size
+        local w2, h2 = icon_size, icon_size
 
-        local offset = offset * (w / 4)
+        offset = offset * (w2 / 4)
 
-        local x, y = x - w / 2, y - h / 2
+        x, y = x - w2 / 2, y - h2 / 2
         surface.SetMaterial(tex)
         surface.SetDrawColor(255, 255, 255, 255)
-        surface.DrawTexturedRect(x - offset, y, w, h)
+        surface.DrawTexturedRect(x - offset, y, w2, h2)
     end
 
     local left_down, right_down
@@ -681,19 +683,19 @@ if CLIENT then
             surface.SetMaterial(arrow_left_tex)
 
             do
-                local s = hover_left and s * 1.5 or s
+                local s2 = hover_left and s * 1.5 or s
                 if hover_left and left_down then
-                    s = s * 1.5
+                    s2 = s2 * 1.5
                 end
-                surface.DrawTexturedRectRotated(left_x, center_y, s, s, 45)
+                surface.DrawTexturedRectRotated(left_x, center_y, s2, s2, 45)
             end
 
             do
-                local s = hover_right and s * 1.5 or s
+                local s2 = hover_right and s * 1.5 or s
                 if hover_right and left_down then
-                    s = s * 1.5
+                    s2 = s2 * 1.5
                 end
-                surface.DrawTexturedRectRotated(right_x, center_y, s, s, 45 + 180)
+                surface.DrawTexturedRectRotated(right_x, center_y, s2, s2, 45 + 180)
             end
 
             -- surface.DrawTexturedRectRotated(left_x, center_y, w, h, 0)
@@ -786,7 +788,7 @@ if CLIENT then
 
 
 
-        local wowo_sensitivity = GetConVarNumber("wowozela_sensitivity") / 6
+        local wowo_sensitivity = (GetConVar("wowozela_sensitivity") and GetConVar("wowozela_sensitivity"):GetFloat() or 0.5) / 6
 
         if upsidedown then
             x = -x
@@ -795,7 +797,7 @@ if CLIENT then
         cx = cx + (x / 35) * wowo_sensitivity
         cy = cy + (y / 35) * wowo_sensitivity
 
-        local cy = cy
+        cy = cy
         if ply:KeyDown(IN_SPEED) then
             cy = cy / 90 -- -1 to 1
             cy = (cy + 1) / 2 -- 0 to 1
@@ -808,11 +810,11 @@ if CLIENT then
         end
 
 
-        local ang = Angle(cy, -cx, ang.r)
+        ang = Angle(cy, -cx, ang.r)
         ang.p = math.NormalizeAngle(ang.p)
 
-        local max = GetConVarNumber("cl_pitchup")
-        local min = GetConVarNumber("cl_pitchdown")
+        local max = GetConVar("cl_pitchup") and GetConVar("cl_pitchup"):GetFloat() or 89
+        local min = GetConVar("cl_pitchdown") and GetConVar("cl_pitchdown"):GetFloat() or 89
 
         if ang.p >= max then
             upsidedown = true
@@ -846,8 +848,8 @@ if CLIENT then
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
         if IsValid(wep) and wep:GetClass() == "wowozela" and ply:KeyDown(IN_RELOAD) then
-            local selection = table.Copy(selection)
-            if bind:find("+menu") and pressed and selection then
+            local selection2 = table.Copy(selection)
+            if bind:find("+menu") and pressed and selection2 then
                 local Menu = DermaMenu()
                 local submenus = {}
                 local done = {}
@@ -856,15 +858,15 @@ if CLIENT then
 
                     submenus[category] = submenus[category] or Menu:AddSubMenu(category)
 
-                    for _, data in pairs(wowozela.GetSamples()) do
-                        if data.category == category and not done[data.path] then
-                            done[data.path] = true
-                            submenus[data.category]:AddOption(data.name, function()
-                                wep.Pages[selection.page][selection.index] = data
+                    for _, data2 in pairs(wowozela.GetSamples()) do
+                        if data2.category == category and not done[data2.path] then
+                            done[data2.path] = true
+                            submenus[data2.category]:AddOption(data2.name, function()
+                                wep.Pages[selection2.page][selection2.index] = data2
                                 file.Write("wowozela_custom_page.txt",
-                                    util.TableToJSON(wep.Pages[selection.page], true))
+                                    util.TableToJSON(wep.Pages[selection2.page], true))
                                 wep:LoadPages()
-                                play_non_looping_sound(wep, data.path)
+                                play_non_looping_sound(wep, data2.path)
                             end)
                         end
                     end

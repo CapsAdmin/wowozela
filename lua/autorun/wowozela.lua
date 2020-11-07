@@ -138,9 +138,9 @@ if SERVER then
     end
 
     hook.Add("PlayerInitialSpawn", "send_wowozela_samples", function(ply)
-        hook.Add("SetupMove", ply, function(self, ply, _, cmd)
-            if self == ply and not cmd:IsForced() then
-                wowozela.BroacastSamples(ply)
+        hook.Add("SetupMove", ply, function(self, oply, _, cmd)
+            if ply == oply and not cmd:IsForced() then
+                wowozela.BroacastSamples(oply)
                 hook.Remove("SetupMove", self)
             end
         end)
