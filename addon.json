@@ -5,6 +5,7 @@
 	"tags" : [ "fun" ],
 	"ignore" :
 	[
+		"convert.py",
 		".gitignore",
 		".editorconfig",
 		".git*",
