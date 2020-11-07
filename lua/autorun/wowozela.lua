@@ -249,6 +249,7 @@ do -- sample meta
                 ref.paused = true
                 ref.obj = snd
                 snd:EnableLooping(true)
+                snd:SetVolume(wowozela.intvolume or 1)
 
                 if sampler.Player == LocalPlayer() then
                     snd:Set3DEnabled(false)
@@ -286,7 +287,7 @@ do -- sample meta
 
     local function play_sound(snd, sampler)
         if not IsValid(snd.obj) then return end
-        if not snd.paused then return end
+        if not snd.paused or wowozela.disabled then return end
 
         snd.obj:Play()
         snd.obj:SetPos(sampler.Player:EyePos(), sampler.Player:GetAimVector())
@@ -324,6 +325,25 @@ do -- sample meta
             end
         end
     end
+
+    cvars.AddChangeCallback("wowozela_volume", function(cvar, oldval, newval)
+        if SERVER then return end
+        if oldval == newval then return end
+
+        local vol = tonumber(newval) or 0.5
+        wowozela.intvolume = math.Clamp(vol, 0, 1)
+        wowozela.disabled = vol < 0.01
+
+        for _, ply in ipairs(player.GetAll()) do
+            local sampler = wowozela.GetSampler(ply)
+
+            if sampler and sampler.Samples then
+                for _, sample in ipairs(sampler.Samples) do
+                    set_volume(sample, sampler.Volume, sampler)
+                end
+            end
+        end
+    end, "wowozela")
 
     function META:Start(sample_index, key)
         if not self:CanPlay() then
@@ -408,7 +428,7 @@ do -- sample meta
     end
 
     function META:Think()
-        if not self:CanPlay() then
+        if not self:CanPlay() or wowozela.disabled then
             if self.WasPlaying then
                 for _, csp in ipairs(self.Samples) do
                     if not csp.paused then
@@ -439,15 +459,6 @@ do -- sample meta
 
         if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
             self:MakeParticle()
-        end
-
-        if wowozela.disabled then
-            for _, csp in ipairs(self.Samples) do
-                if not csp.paused then
-                    stop_sound(csp, self)
-                end
-            end
-            return
         end
     end
 
@@ -547,9 +558,9 @@ do -- hooks
         end
 
         if CLIENT then
-            --local vol = wowozela.volume:GetFloat()
-            --wowozela.intvolume = math.Clamp(vol, 0.01, 1)
-            --wowozela.disabled = vol <= 0.01
+            local vol = wowozela.volume:GetFloat()
+            wowozela.intvolume = math.Clamp(vol, 0, 1)
+            wowozela.disabled = vol < 0.01
         end
 
         for _, ply in ipairs(player.GetAll()) do
@@ -566,6 +577,8 @@ do -- hooks
     end
 
     hook.Add("Think", "wowozela_think", wowozela.Think)
+
+
 
     function wowozela.Draw()
         if not wowozela.KnownSamples[1] then
