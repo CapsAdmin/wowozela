@@ -784,14 +784,16 @@ if CLIENT then
 
         EnableUnlimitedPitch(ply)
 
-        local sensitivity = GetConVarNumber("sensitivity")
+
+
+        local wowo_sensitivity = GetConVarNumber("wowozela_sensitivity") / 6
 
         if upsidedown then
             x = -x
         end
 
-        cx = cx + x / sensitivity / 5
-        cy = cy + y / sensitivity / 5
+        cx = cx + (x / 35) * wowo_sensitivity
+        cy = cy + (y / 35) * wowo_sensitivity
 
         local cy = cy
         if ply:KeyDown(IN_SPEED) then
