@@ -796,20 +796,20 @@ if CLIENT then
         cx = cx + x * m_yaw
         cy = cy + y * m_pitch
 
-        cy = cy
+        local rcy = cy
         if ply:KeyDown(IN_SPEED) then
-            cy = cy / 90 -- -1 to 1
-            cy = (cy + 1) / 2 -- 0 to 1
-            cy = cy * 12 -- 0 to 12
-            cy = math.Round(cy * 2) / 2 -- rounded
-            cy = cy / 12
-            cy = (cy * 2) - 1
+            rcy = rcy / 90 -- -1 to 1
+            rcy = (rcy + 1) / 2 -- 0 to 1
+            rcy = rcy * 12 -- 0 to 12
+            rcy = math.Round(rcy * 2) / 2 -- rounded
+            rcy = rcy / 12
+            rcy = (rcy * 2) - 1
 
-            cy = cy * 90
+            rcy = rcy * 90
         end
 
 
-        ang = Angle(cy, -cx, ang.r)
+        ang = Angle(rcy, -cx, ang.r)
         ang.p = math.NormalizeAngle(ang.p)
 
         local max = GetConVar("cl_pitchup") and GetConVar("cl_pitchup"):GetFloat() or 89
@@ -833,12 +833,12 @@ if CLIENT then
 
         cmd:SetViewAngles(ang + pitch_offset)
 
-        if ply.wowozela_real_pitch ~= cy then
+        if ply.wowozela_real_pitch ~= rcy then
             net.Start("wowozela_pitch", true)
             net.WriteFloat(cy)
             net.SendToServer()
             --print("sending")
-            ply.wowozela_real_pitch = cy
+            ply.wowozela_real_pitch = rcy
         end
 
         return true
