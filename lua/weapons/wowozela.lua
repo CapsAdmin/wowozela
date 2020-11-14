@@ -786,16 +786,15 @@ if CLIENT then
 
         EnableUnlimitedPitch(ply)
 
-
-
-        local wowo_sensitivity = (GetConVar("wowozela_sensitivity") and GetConVar("wowozela_sensitivity"):GetFloat() or 0.5) / 6
+        local m_pitch = GetConVar("m_pitch") and GetConVar("m_pitch"):GetFloat() or 0.022
+        local m_yaw = GetConVar("m_yaw") and GetConVar("m_yaw"):GetFloat() or 0.022
 
         if upsidedown then
             x = -x
         end
 
-        cx = cx + (x / 35) * wowo_sensitivity
-        cy = cy + (y / 35) * wowo_sensitivity
+        cx = cx + x * m_pitch
+        cy = cy + y * m_yaw
 
         cy = cy
         if ply:KeyDown(IN_SPEED) then
