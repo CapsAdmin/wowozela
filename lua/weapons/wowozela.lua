@@ -835,7 +835,7 @@ if CLIENT then
 
         if ply.wowozela_real_pitch ~= rcy then
             net.Start("wowozela_pitch", true)
-            net.WriteFloat(cy)
+            net.WriteFloat(rcy)
             net.SendToServer()
             --print("sending")
             ply.wowozela_real_pitch = rcy
