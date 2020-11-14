@@ -793,8 +793,8 @@ if CLIENT then
             x = -x
         end
 
-        cx = cx + x * m_pitch
-        cy = cy + y * m_yaw
+        cx = cx + x * m_yaw
+        cy = cy + y * m_pitch
 
         cy = cy
         if ply:KeyDown(IN_SPEED) then
