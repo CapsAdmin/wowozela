@@ -239,27 +239,33 @@ do -- sample meta
 
     local function create_sound(path, sampler)
         if SERVER then return end
-        local ref = {}
+        local _smeta = {
+            __index = function(self, index)
+                if index == "create" then
+                    return function(callback)
+                        sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
+                            if snd then
+                                self.paused = true
+                                self.obj = snd
+                                snd:EnableLooping(true)
+                                snd:SetVolume(wowozela.intvolume or 1)
 
-        sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
-            --[[if errnum then
-                print(path, err)
-            end]]
-            if snd then
-                ref.paused = true
-                ref.obj = snd
-                snd:EnableLooping(true)
-                snd:SetVolume(wowozela.intvolume or 1)
-
-                if sampler.Player == LocalPlayer() then
-                    snd:Set3DEnabled(false)
-                else
-                    snd:Set3DEnabled(true)
+                                if sampler.Player == LocalPlayer() then
+                                    snd:Set3DEnabled(false)
+                                else
+                                    snd:Set3DEnabled(true)
+                                end
+                                callback()
+                            end
+                        end)
+                    end
                 end
+                return rawget(self, index)
             end
-        end)
+        }
+        
 
-        return ref
+        return setmetatable({}, _smeta)
     end
 
     local function set_volume(snd, num, sampler)
@@ -364,7 +370,13 @@ do -- sample meta
             self.KeyToSample[key] = sample
         end
 
-        play_sound(sample, self)
+        if IsValid(sample.obj) then 
+            play_sound(sample, self)
+        else
+            sample.create(function()
+                play_sound(sample, self)
+            end)
+        end
     end
 
     function META:Stop(sample_index, key)
