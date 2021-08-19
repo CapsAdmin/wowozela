@@ -243,21 +243,25 @@ do -- sample meta
             __index = function(self, index)
                 if index == "create" then
                     return function(callback)
-                        sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
-                            if snd then
-                                self.paused = true
-                                self.obj = snd
-                                snd:EnableLooping(true)
-                                snd:SetVolume(wowozela.intvolume or 1)
+                        if IsValid(rawget(self, "obj")) then 
+                            callback() 
+                        else
+                            sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
+                                if snd then
+                                    self.paused = true
+                                    self.obj = snd
+                                    snd:EnableLooping(true)
+                                    snd:SetVolume(wowozela.intvolume or 1)
 
-                                if sampler.Player == LocalPlayer() then
-                                    snd:Set3DEnabled(false)
-                                else
-                                    snd:Set3DEnabled(true)
+                                    if sampler.Player == LocalPlayer() then
+                                        snd:Set3DEnabled(false)
+                                    else
+                                        snd:Set3DEnabled(true)
+                                    end
+                                    callback()
                                 end
-                                callback()
-                            end
-                        end)
+                            end)
+                        end
                     end
                 end
                 return rawget(self, index)
@@ -370,13 +374,9 @@ do -- sample meta
             self.KeyToSample[key] = sample
         end
 
-        if IsValid(sample.obj) then 
+        sample.create(function()
             play_sound(sample, self)
-        else
-            sample.create(function()
-                play_sound(sample, self)
-            end)
-        end
+        end)
     end
 
     function META:Stop(sample_index, key)
