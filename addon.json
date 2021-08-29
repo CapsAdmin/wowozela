@@ -19,6 +19,7 @@
 		"*.md",
 		"*.yml",
 		"COPYING",
-		"_TEMP.gma"
+		"_TEMP.gma",
+		"workshop_post.py"
 	]
 }
