@@ -106,7 +106,7 @@ if SERVER then
 
         for _, directory in ipairs(directories) do
             for _, file_name in ipairs(file.Find("sound/wowozela/samples/" .. directory .. "/*", "GAME")) do
-                if file_name:EndsWith(".ogg") or file_name:EndsWith(".wav") or file_name:EndsWith(".mp3") then
+                if file_name:EndsWith(".ogg") or file_name:EndsWith(".mp3") then
                     table.insert(wowozela.KnownSamples, {
                         category = directory,
                         path = "wowozela/samples/" .. directory .. "/" .. file_name,
@@ -114,7 +114,7 @@ if SERVER then
                     })
 
                     if SERVER then
-                        resource.AddFile("sound/wowozela/samples/" .. file_name)
+                        --resource.AddFile("sound/wowozela/samples/" .. file_name)
                         resource.AddWorkshop("108170491")
                     end
                 end
