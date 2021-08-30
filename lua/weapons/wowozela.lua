@@ -342,6 +342,12 @@ if CLIENT then
 
         self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
 
+        for i, v in ipairs(self.Categories) do
+            if wowozela.defaultpage and wowozela.defaultpage:GetString() == v then
+                self.CurrentPageIndex = i
+            end
+        end
+
         for k, v in ipairs(wowozela.GetSamples()) do
             if not table.HasValue(self.Categories, v.category) then
                 table.insert(self.Categories, v.category)

@@ -25,7 +25,7 @@ end
 if CLIENT then
     wowozela.volume = CreateClientConVar("wowozela_volume", "0.5", true, false)
     wowozela.hudtext = CreateClientConVar("wowozela_hudtext", "1", true, false)
-    --wowozela.sensitivity = CreateClientConVar("wowozela_sensitivity", "4", true, false)
+    wowozela.defaultpage = CreateClientConVar("wowozela_defaultpage", "", true, false)
 
     local function set_sample_index(which, note_index)
         local wep = LocalPlayer():GetActiveWeapon()
