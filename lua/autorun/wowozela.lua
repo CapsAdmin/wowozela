@@ -138,10 +138,11 @@ if SERVER then
     end
 
     hook.Add("PlayerInitialSpawn", "send_wowozela_samples", function(ply)
-        hook.Add("SetupMove", ply, function(self, oply, _, cmd)
+        local hookName = "wowozela_" .. ply:SteamID64()
+        hook.Add("SetupMove", hookName, function(oply, _, cmd)
             if ply == oply and not cmd:IsForced() then
                 wowozela.BroacastSamples(oply)
-                hook.Remove("SetupMove", self)
+                hook.Remove("SetupMove", hookName)
             end
         end)
     end)
@@ -243,8 +244,8 @@ do -- sample meta
             __index = function(self, index)
                 if index == "create" then
                     return function(callback)
-                        if IsValid(rawget(self, "obj")) then 
-                            callback() 
+                        if IsValid(rawget(self, "obj")) then
+                            callback()
                         else
                             sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
                                 if snd then
