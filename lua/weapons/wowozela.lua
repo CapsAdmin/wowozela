@@ -724,7 +724,7 @@ if CLIENT then
             end
         end
 
-        if not LocalPlayer():ShouldDrawLocalPlayer() then
+        if not LocalPlayer():ShouldDrawLocalPlayer() and (not wowozela.clickui or wowozela.clickui:GetBool()) then
 
             local hud_distance = 128
 

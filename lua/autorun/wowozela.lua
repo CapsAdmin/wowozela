@@ -24,6 +24,7 @@ end
 
 if CLIENT then
     wowozela.volume = CreateClientConVar("wowozela_volume", "0.5", true, false)
+    wowozela.clickui = CreateClientConVar("wowozela_clickui", "1", true, false)
     --wowozela.sensitivity = CreateClientConVar("wowozela_sensitivity", "4", true, false)
 
     local function set_sample_index(which, note_index)
