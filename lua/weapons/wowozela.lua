@@ -575,7 +575,7 @@ if CLIENT then
 
             draw.NoTexture()
             surface.SetDrawColor(Color(100, 100, 100, 75))
-            drawCircle(center_x, center_y, 36, 10)
+            drawCircle(center_x, center_y, 36, max)
 
             draw.TextShadow({
                 text = self.Categories[self.CurrentPageIndex],
