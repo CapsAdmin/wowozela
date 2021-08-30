@@ -254,6 +254,7 @@ do -- sample meta
                                     self.obj = snd
                                     snd:EnableLooping(true)
                                     snd:SetVolume(wowozela.intvolume or 1)
+                                    snd:SetPlaybackRate((sampler.Pitch or 100) / 100)
 
                                     if sampler.Player == LocalPlayer() then
                                         snd:Set3DEnabled(false)
