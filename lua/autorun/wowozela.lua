@@ -269,7 +269,6 @@ do -- sample meta
                 return rawget(self, index)
             end
         }
-        
 
         return setmetatable({}, _smeta)
     end
@@ -370,15 +369,16 @@ do -- sample meta
         if key then
             local previous_sample = self.KeyToSample[key]
             if previous_sample then
-                stop_sound(sample, self)
+                stop_sound(previous_sample, self)
             end
 
             self.KeyToSample[key] = sample
-        end
 
-        sample.create(function()
-            play_sound(sample, self)
-        end)
+
+            sample.create(function()
+                play_sound(sample, self)
+            end)
+        end
     end
 
     function META:Stop(sample_index, key)

@@ -846,50 +846,56 @@ if CLIENT then
 
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
-        if IsValid(wep) and wep:GetClass() == "wowozela" and ply:KeyDown(IN_RELOAD) then
-            local selection2 = table.Copy(selection)
-            if bind:find("+menu") and pressed and selection2 then
-                local Menu = DermaMenu()
-                local submenus = {}
-                local done = {}
-                for _, data in pairs(wowozela.GetSamples()) do
-                    local category = data.category
+        if IsValid(wep) and wep:GetClass() == "wowozela" then
+            local num = tonumber(bind:match("slot(%d+)"))
+            if num == 0 then
+                num = 10
+            end
 
-                    submenus[category] = submenus[category] or Menu:AddSubMenu(category)
+            if ply:KeyDown(IN_RELOAD) then
+                local selection2 = table.Copy(selection)
+                if bind:find("+menu") and pressed and selection2 then
+                    local Menu = DermaMenu()
+                    local submenus = {}
+                    for _, data in pairs(wowozela.GetSamples()) do
+                        local category = data.category
+
+                        submenus[category] = submenus[category] or Menu:AddSubMenu(category)
+                    end
 
                     for _, data2 in pairs(wowozela.GetSamples()) do
-                        if data2.category == category and not done[data2.path] then
-                            done[data2.path] = true
-                            submenus[data2.category]:AddOption(data2.name, function()
-                                wep.Pages[selection2.page][selection2.index] = data2
-                                file.Write("wowozela_custom_page.txt",
-                                    util.TableToJSON(wep.Pages[selection2.page], true))
-                                wep:LoadPages()
-                                play_non_looping_sound(wep, data2.path)
-                            end)
-                        end
+                        submenus[data2.category]:AddOption(data2.name, function()
+                            wep.Pages[selection2.page][selection2.index] = data2
+                            file.Write("wowozela_custom_page.txt",
+                                util.TableToJSON(wep.Pages[selection2.page], true))
+                            wep:LoadPages()
+                            play_non_looping_sound(wep, data2.path)
+                        end)
                     end
-                end
-                Menu:Open()
+                    Menu:Open()
 
-                freeze_mouse = {
-                    ref = Menu,
-                    x = gui.MouseX(),
-                    y = gui.MouseY()
-                }
-            end
-
-            local num = tonumber(bind:match("slot(%d+)"))
-            if num and pressed then
-                if num == 0 then
-                    num = 10
+                    freeze_mouse = {
+                        ref = Menu,
+                        x = gui.MouseX(),
+                        y = gui.MouseY()
+                    }
                 end
 
-                if wep.Pages and wep.Pages[num] then
+                if num and pressed and wep.Pages and wep.Pages[num] then
                     wep.CurrentPageIndex = num
                 end
+                return true
+            elseif (ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_ATTACK2)) and num and pressed then
+                local sample_index = wep:PageIndexToWowozelaIndex(num)
+                if sample_index and ply:KeyDown(IN_ATTACK) then
+                    wowozela.SetSampleIndexLeft(sample_index)
+                end
+                if sample_index and ply:KeyDown(IN_ATTACK2) then
+                    wowozela.SetSampleIndexRight(sample_index)
+                end
+
+                return true
             end
-            return true
         end
     end)
 end
