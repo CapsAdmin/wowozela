@@ -316,9 +316,9 @@ do -- sample meta
         if self:IsKeyDown(IN_WALK) then
             num = num - 7 / 12
         end
-        local lastPitch = self.Pitch
-        self.Pitch = math.floor(100 * 2 ^ num) --, 1, 255)
 
+        local lastPitch = self.Pitch
+        self.Pitch = math.Clamp(math.floor(100 * 2 ^ num), 1, 2048)
         if lastPitch ~= self.Pitch then
             for _, sample in ipairs(self.Samples) do
                 set_pitch(sample, self.Pitch, self)
