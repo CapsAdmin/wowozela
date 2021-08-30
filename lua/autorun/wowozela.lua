@@ -12,7 +12,7 @@ wowozela.ValidNotes = {
 
 wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
 
-wowozela.KnownSamples = {}
+wowozela.KnownSamples = wowozela.KnownSamples or {}
 
 function wowozela.GetSamples()
     return wowozela.KnownSamples
@@ -319,7 +319,7 @@ do -- sample meta
         end
 
         local lastPitch = self.Pitch
-        self.Pitch = math.Clamp(math.floor(100 * 2 ^ num), 1, 2048)
+        self.Pitch = math.Clamp(math.floor((100 * 2 ^ num) * 10) / 10, 0.1, 2048)
         if lastPitch ~= self.Pitch then
             for _, sample in ipairs(self.Samples) do
                 set_pitch(sample, self.Pitch, self)
