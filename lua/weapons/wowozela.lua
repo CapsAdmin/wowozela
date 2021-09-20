@@ -955,6 +955,11 @@ if CLIENT then
         Menu:AddOption("Custom...", function()
             Derma_StringRequest("Sound (Mp3/Ogg)", "", "", function(text)
                 if text:sub(1, 4) ~= "http" then return end
+
+                if text:sub(1, 19) == "https://github.com/" and text:sub(-9) ~= "?raw=true" then
+                    text = text .. "?raw=true"
+                end
+
                 text = text:gsub(" ", "%%20")
                 local filename = getFileName(text)
                 wowozela.PlayURL(text, "noplay", function(snd, _, err)
