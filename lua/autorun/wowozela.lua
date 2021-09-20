@@ -22,6 +22,8 @@ function wowozela.GetSample(i)
     return wowozela.KnownSamples[i]
 end
 
+
+
 if CLIENT then
     wowozela.volume = CreateClientConVar("wowozela_volume", "0.5", true, false)
     wowozela.hudtext = CreateClientConVar("wowozela_hudtext", "1", true, false)
@@ -51,10 +53,35 @@ if CLIENT then
         return set_sample_index("right", noteIndex)
     end
 
+
+    function wowozela.RequestCustomSamplesIndexes(samples)
+        net.Start("wowozela_customsample")
+            net.WriteTable(samples)
+        net.SendToServer()
+    end
+
     net.Receive("wowozela_update_samples", function()
 
-        for i, v in ipairs(net.ReadTable()) do
+        for i, v in pairs(net.ReadTable()) do
             wowozela.KnownSamples[i] = v
+        end
+
+
+        if not net.ReadBool() then
+            for _, ply in ipairs(player.GetAll()) do
+                if ply.wowozela_sampler and ply.wowozela_sampler.Samples then
+                    for i, v in pairs(wowozela.KnownSamples) do
+                        if v.custom then
+                            if IsValid(v.obj) then
+                                v.obj:Stop()
+                                v.obj = nil
+                            end
+                            ply.wowozela_sampler:SetSample(i, v.custom, v.path)
+                        end
+                    end
+                end
+            end
+            return
         end
 
         wowozela.SetSampleIndexLeft(1)
@@ -75,9 +102,68 @@ if CLIENT then
             end
         end
     end)
+
+    local FOLDER = "wowozela_cache"
+    file.CreateDir(FOLDER, "DATA")
+
+    local function GetURLSound(url, back)
+        if url == "" then return end
+        local path = FOLDER .. "/" .. util.CRC(url) .. ".dat"
+
+        local exists = file.Exists(path, "DATA")
+        if exists then
+            back("data/" .. path)
+            return
+        end
+
+        http.Fetch(url,function(data,len,hdr,code)
+            file.Write(path, data)
+            back("data/" .. path)
+        end, nil, {
+            ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.214 Safari/537.36 Vivaldi/3.8.2259.42"
+        })
+    end
+
+    function wowozela.PlayURL(name, settings, callback)
+        GetURLSound(name, function(sndPath)
+            sound.PlayFile(sndPath, settings, callback)
+        end)
+    end
 end
 
 if SERVER then
+    util.AddNetworkString("wowozela_customsample")
+    wowozela.customsamples = {}
+    net.Receive("wowozela_customsample", function(len, ply)
+        local samples = net.ReadTable()
+        local startID = ply:AccountID() * 8
+
+        local newSampleIDs = {}
+        for k,v in pairs(samples) do
+            wowozela.KnownSamples[startID + k] = {
+                category = "custom-sample-hidden",
+                custom = true,
+                path = v[1],
+                name = v[2]
+            }
+
+            newSampleIDs[startID + k] = {
+                v[1],
+                v[2],
+                ply:SteamID64()
+            }
+        end
+
+        net.Start("wowozela_update_samples")
+            net.WriteTable(wowozela.KnownSamples)
+            net.WriteBool(false)
+        net.Broadcast()
+
+        table.Add(wowozela.customsamples, newSampleIDs)
+    end)
+
+
+
     for key, in_enum in pairs(wowozela.ValidNotes) do
         util.AddNetworkString("wowozela_select_" .. key)
 
@@ -135,6 +221,7 @@ if SERVER then
     function wowozela.BroacastSamples(ply)
         net.Start("wowozela_update_samples")
         net.WriteTable(wowozela.KnownSamples)
+        net.WriteBool(true)
         net.Send(ply)
     end
 
@@ -180,9 +267,8 @@ do -- sample meta
         self.Samples = {}
 
         self.Player = ply
-
         for i, sample in pairs(wowozela.KnownSamples) do
-            self:SetSample(i, sample.path)
+            self:SetSample(i, sample.custom, sample.path)
         end
 
         self.KeyToSample = {}
@@ -194,7 +280,7 @@ do -- sample meta
             local wep = self.Player:GetActiveWeapon()
             local get = "GetNoteIndex" .. button
             if wep:IsWeapon() and wep:GetClass() == "wowozela" and wep[get] then
-                return math.Clamp(wep[get](wep), 1, #wowozela.KnownSamples)
+                return wep[get](wep)
             end
         end
     end
@@ -239,8 +325,9 @@ do -- sample meta
         return false
     end
 
-    local function create_sound(path, sampler)
+    local function create_sound(path, isHttp, sampler)
         if SERVER then return end
+        local processing = false
         local _smeta = {
             __index = function(self, index)
                 if index == "create" then
@@ -248,8 +335,12 @@ do -- sample meta
                         if IsValid(rawget(self, "obj")) then
                             callback()
                         else
-                            sound.PlayFile("sound/" .. path, "3d noplay noblock", function(snd, errnum, err)
+                            if processing then return end
+                            processing = true
+                            local func, newPath =  (isHttp and wowozela.PlayURL or sound.PlayFile), isHttp and path or "sound/" .. path
+                            func(newPath, "3d noplay noblock", function(snd, errnum, err)
                                 if snd then
+                                    processing = false
                                     self.paused = true
                                     self.obj = snd
                                     snd:EnableLooping(true)
@@ -261,6 +352,7 @@ do -- sample meta
                                     else
                                         snd:Set3DEnabled(true)
                                     end
+
                                     callback()
                                 end
                             end)
@@ -307,8 +399,8 @@ do -- sample meta
         snd.paused = false
     end
 
-    function META:SetSample(i, path)
-        self.Samples[i] = create_sound(path or wowozela.DefaultSound, self)
+    function META:SetSample(i, ishttp, path)
+        self.Samples[i] = create_sound(path or wowozela.DefaultSound, ishttp, self)
     end
 
     function META:SetPitch(num) -- ???
@@ -321,7 +413,7 @@ do -- sample meta
         local lastPitch = self.Pitch
         self.Pitch = math.Clamp(math.floor((100 * 2 ^ num) * 10) / 10, 0.1, 2048)
         if lastPitch ~= self.Pitch then
-            for _, sample in ipairs(self.Samples) do
+            for _, sample in pairs(self.Samples) do
                 set_pitch(sample, self.Pitch, self)
             end
         end
@@ -332,7 +424,7 @@ do -- sample meta
         self.Volume = math.Clamp(num or self.Volume, 0.0001, 1)
 
         if lastVol ~= self.Volume then
-            for _, sample in ipairs(self.Samples) do
+            for _, sample in pairs(self.Samples) do
                 set_volume(sample, self.Volume, self)
             end
         end
@@ -377,7 +469,9 @@ do -- sample meta
 
 
             sample.create(function()
-                play_sound(sample, self)
+                if self.KeyToSample[key] == sample then
+                    play_sound(sample, self)
+                end
             end)
         end
     end

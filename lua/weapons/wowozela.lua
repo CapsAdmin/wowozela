@@ -61,15 +61,19 @@ end
 function SWEP:DrawWorldModel()
     return true
 end
+
 function SWEP:CanPrimaryAttack()
     return false
 end
+
 function SWEP:CanSecondaryAttack()
     return false
 end
+
 function SWEP:ShouldDropOnDie()
     return false
 end
+
 function SWEP:Reload()
     return false
 end
@@ -131,36 +135,35 @@ if CLIENT then
     function EnableUnlimitedPitch(ply)
 
         if not ply.wowozela_sampler then return end
+        if ply.wowozela_head_cb then return end
 
-        if not ply.wowozela_head_cb then
-            ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(oply)
-                local head = oply:LookupBone("ValveBiped.Bip01_Head1")
+        ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(oply)
+            local head = oply:LookupBone("ValveBiped.Bip01_Head1")
 
-                if head then
-                    local m = oply:GetBoneMatrix(head)
-                    if m then
-                        local pitch = math.NormalizeAngle(oply.wowozela_sampler:GetPlayerPitch() * -89)
-                        local yaw = oply:EyeAngles().y
+            if head then
+                local m = oply:GetBoneMatrix(head)
+                if m then
+                    local pitch = math.NormalizeAngle(oply.wowozela_sampler:GetPlayerPitch() * -89)
+                    local yaw = oply:EyeAngles().y
 
-                        local vec = Angle(pitch, yaw):Forward() * 100
+                    local vec = Angle(pitch, yaw):Forward() * 100
 
-                        local ang = vec:AngleEx(Vector(0,0,-1)) + Angle(-90,0,-90)
+                    local ang = vec:AngleEx(Vector(0,0,-1)) + Angle(-90,0,-90)
 
-                        if pitch > 90 then
-                            ang.y = ang.y - 180
-                            ang.p = -ang.p
-                        elseif pitch < -90 then
-                            ang.y = ang.y - 180
-                            ang.p = -ang.p
-                        end
-
-
-                        m:SetAngles(ang)
-                        ply:SetBoneMatrix(head, m)
+                    if pitch > 90 then
+                        ang.y = ang.y - 180
+                        ang.p = -ang.p
+                    elseif pitch < -90 then
+                        ang.y = ang.y - 180
+                        ang.p = -ang.p
                     end
+
+
+                    m:SetAngles(ang)
+                    ply:SetBoneMatrix(head, m)
                 end
-            end)
-        end
+            end
+        end)
 
     end
 end
@@ -334,19 +337,41 @@ if CLIENT then
         return cx + math.sin(a) * radius, cy + math.cos(a) * radius
     end
 
-    function SWEP:LoadPages()
-
-        if not wowozela.GetSample(1) then
-            return
-        end
-
-        self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
+    function SWEP:LoadCustoms()
+        local customsamples = {}
 
         for i, v in ipairs(self.Categories) do
-            if wowozela.defaultpage and wowozela.defaultpage:GetString() == v then
-                self.CurrentPageIndex = i
+            if v == "custom" then
+                for _, sample in pairs(self.Pages[i]) do
+                    if sample.custom then
+                        table.insert(customsamples, {
+                            sample.path,
+                            sample.name
+                        })
+                    end
+                end
             end
         end
+        local cID = LocalPlayer():AccountID() * 8
+        local missingOne = false
+        for k, newsample in next, customsamples do
+            if not wowozela.GetSamples()[cID + k] or wowozela.GetSamples()[cID + k].path ~= newsample.path then
+                missingOne = true
+            end
+        end
+
+        if missingOne then
+            wowozela.RequestCustomSamplesIndexes(customsamples)
+        end
+
+    end
+    function SWEP:LoadPages()
+
+            if not wowozela.GetSample(1) then
+                return
+            end
+
+            self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
 
         for k, v in ipairs(wowozela.GetSamples()) do
             if not table.HasValue(self.Categories, v.category) then
@@ -354,10 +379,22 @@ if CLIENT then
             end
         end
 
+        local defaultPage = wowozela.defaultpage and wowozela.defaultpage:GetString()
+        if defaultPage and defaultPage ~= "" then
+            for i, v in ipairs(self.Categories) do
+                if defaultPage == v then
+                    self.CurrentPageIndex = i
+                end
+            end
+        end
+
         self.Pages = {}
 
         for i, category in ipairs(self.Categories) do
             self.Pages[i] = {}
+            if category == "custom" then
+                for I = 1, 10 do table.insert(self.Pages[i], {}) end
+            end
             for k, v in ipairs(wowozela.GetSamples()) do
                 if v.category == category then
                     table.insert(self.Pages[i], v)
@@ -369,6 +406,13 @@ if CLIENT then
             for i, v in ipairs(self.Categories) do
                 if v == "custom" then
                     self.Pages[i] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
+
+                    for testIndex = 1, 10 do
+                        if not self.Pages[i][testIndex] then
+                            self.Pages[i][testIndex] = {}
+                        end
+                    end
+                    self:LoadCustoms()
                     break
                 end
             end
@@ -427,11 +471,12 @@ if CLIENT then
     function SWEP:PageIndexToWowozelaIndex(page_index)
 
         local sample = self.Pages[self.CurrentPageIndex][page_index]
+
         if not sample then
             return
         end
 
-        for i, v in ipairs(wowozela.GetSamples()) do
+        for i, v in pairs(wowozela.GetSamples()) do
             if sample.path == v.path then
                 return i
             end
@@ -441,7 +486,29 @@ if CLIENT then
     local arrow_left_tex = Material("vgui/cursors/arrow")
     local circle_tex = Material("particle/particle_glow_02")
 
-    local function play_non_looping_sound(self, path)
+    local lastHttp
+    local function play_non_looping_sound(self, isHttp, path)
+        if isHttp then
+            if IsValid(lastHttp) then
+                lastHttp:Stop()
+                lastHttp = nil
+            end
+            wowozela.PlayURL(path, "noplay", function(snd)
+                if snd then
+                    lastHttp = snd
+                    snd:SetVolume(0.25)
+                    snd:Play()
+
+                    timer.Simple(1.5, function()
+                        if IsValid(snd) then
+                            snd:Stop()
+                        end
+                    end)
+                end
+            end)
+            return
+        end
+
         if self.preview_csp then
             self.preview_csp:Stop()
         end
@@ -650,12 +717,12 @@ if CLIENT then
                 local sample_index = self:PageIndexToWowozelaIndex(hovered_wedge_index)
                 if sample_index then
                     if left_pressed then
-                        play_non_looping_sound(self, wowozela.GetSample(sample_index).path)
+                        play_non_looping_sound(self, wowozela.GetSample(sample_index).custom, wowozela.GetSample(sample_index).path)
                         wowozela.SetSampleIndexLeft(sample_index)
                     end
 
                     if right_pressed then
-                        play_non_looping_sound(self, wowozela.GetSample(sample_index).path)
+                        play_non_looping_sound(self, wowozela.GetSample(sample_index).custom, wowozela.GetSample(sample_index).path)
                         wowozela.SetSampleIndexRight(sample_index)
                     end
                 end
@@ -864,20 +931,40 @@ if CLIENT then
                     local Menu = DermaMenu()
                     local submenus = {}
                     for _, data in pairs(wowozela.GetSamples()) do
+                        if data.custom then continue end
                         local category = data.category
 
                         submenus[category] = submenus[category] or Menu:AddSubMenu(category)
                     end
 
                     for _, data2 in pairs(wowozela.GetSamples()) do
+                        if data2.custom then continue end
                         submenus[data2.category]:AddOption(data2.name, function()
                             wep.Pages[selection2.page][selection2.index] = data2
                             file.Write("wowozela_custom_page.txt",
                                 util.TableToJSON(wep.Pages[selection2.page], true))
                             wep:LoadPages()
-                            play_non_looping_sound(wep, data2.path)
+                            play_non_looping_sound(wep, false, data2.path)
                         end)
                     end
+
+                    Menu:AddSpacer()
+
+                    Menu:AddOption("Custom...", function()
+                        Derma_StringRequest("Sound (Mp3/Ogg)", "", "", function(text)
+                            local parts = string.Split(text, "/")
+                            local filename = string.Split(parts[#parts], ".")[1]
+                            wep.Pages[selection2.page][selection2.index] = {
+                                category = "websound",
+                                name = filename,
+                                custom = "true",
+                                path = text,
+                            }
+                            file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
+                            wep:LoadPages()
+                            play_non_looping_sound(wep, true, text)
+                        end)
+                    end)
                     Menu:Open()
 
                     freeze_mouse = {
