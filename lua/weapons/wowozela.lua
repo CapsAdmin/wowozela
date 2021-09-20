@@ -352,7 +352,8 @@ if CLIENT then
                 end
             end
         end
-        local cID = LocalPlayer():AccountID() * 8
+
+        local cID = 4500 + LocalPlayer():EntIndex() * 12
         local missingOne = false
         for k, newsample in next, customsamples do
             if not wowozela.GetSamples()[cID + k] or wowozela.GetSamples()[cID + k].path ~= newsample.path then
@@ -367,11 +368,11 @@ if CLIENT then
     end
     function SWEP:LoadPages()
 
-            if not wowozela.GetSample(1) then
-                return
-            end
+        if not wowozela.GetSample(1) then
+            return
+        end
 
-            self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
+        self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
 
         for k, v in ipairs(wowozela.GetSamples()) do
             if not table.HasValue(self.Categories, v.category) then
@@ -393,8 +394,9 @@ if CLIENT then
         for i, category in ipairs(self.Categories) do
             self.Pages[i] = {}
             if category == "custom" then
-                for I = 1, 10 do table.insert(self.Pages[i], {}) end
+                for i2 = 1, 10 do self.Pages[i][i2] = {} end
             end
+
             for k, v in ipairs(wowozela.GetSamples()) do
                 if v.category == category then
                     table.insert(self.Pages[i], v)
@@ -407,9 +409,9 @@ if CLIENT then
                 if v == "custom" then
                     self.Pages[i] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
 
-                    for testIndex = 1, 10 do
-                        if not self.Pages[i][testIndex] then
-                            self.Pages[i][testIndex] = {}
+                    for i2 = 1, 10 do
+                        if not self.Pages[i][i2] then
+                            self.Pages[i][i2] = {}
                         end
                     end
                     self:LoadCustoms()
@@ -493,18 +495,17 @@ if CLIENT then
                 lastHttp:Stop()
                 lastHttp = nil
             end
-            wowozela.PlayURL(path, "noplay", function(snd)
-                if snd then
-                    lastHttp = snd
-                    snd:SetVolume(0.25)
-                    snd:Play()
+            wowozela.PlayURL(path, "noplay", function(snd, _, err)
+                if not snd or err then return end
+                lastHttp = snd
+                snd:SetVolume(0.25)
+                snd:Play()
 
-                    timer.Simple(1.5, function()
-                        if IsValid(snd) then
-                            snd:Stop()
-                        end
-                    end)
-                end
+                timer.Simple(1.5, function()
+                    if IsValid(snd) then
+                        snd:Stop()
+                    end
+                end)
             end)
             return
         end
@@ -587,6 +588,12 @@ if CLIENT then
                 ("press " .. keyName .. " while hovering over a sample to reassign it") or nil})
     end
 
+    local function getHue(index)
+        if wowozela.GetSamples()[index].custom then
+            return util.CRC(wowozela.GetSamples()[index].path) % 360
+        end
+        return index / #wowozela.GetSamples() * 360
+    end
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
@@ -666,13 +673,10 @@ if CLIENT then
             end
 
             for index = 1, max do
-                local page_index = self:PageIndexToWowozelaIndex(index)
+                local sound_index = self:PageIndexToWowozelaIndex(index)
                 local wedge_size = ((index - 1) / max)
                 local wedge_angle = wedge_size * 360
-
-                local col = page_index and HSVToColor((page_index / #wowozela.GetSamples()) * 360, 0.75, 1) or
-                                Color(255, 255, 255, 255)
-
+                local col = sound_index and HSVToColor(getHue(sound_index), 0.75, 1) or Color(255, 255, 255, 255)
                 local is_hovering = false
 
                 if degrees >= wedge_angle and degrees <= (wedge_angle + wedge_step) and mouse_far_enough then
@@ -801,8 +805,8 @@ if CLIENT then
 
             local hud_distance = 128
 
-            local left_hue = (self:GetNoteIndexLeft() / #wowozela.GetSamples()) * 360
-            local right_hue = (self:GetNoteIndexRight() / #wowozela.GetSamples()) * 360
+            local left_hue = getHue(self:GetNoteIndexLeft())
+            local right_hue = getHue(self:GetNoteIndexRight())
 
             if left_down and not in_menu then
 
@@ -916,7 +920,75 @@ if CLIENT then
 
         return true
     end)
+    local function getFileName(inputURL)
+        local parts = string.Split(inputURL, "/")
+        local filename = string.Split(parts[#parts], ".")[1]
+        return filename:gsub("%%([A-Fa-f0-9][A-Fa-f0-9])", function(m)
+            local n = tonumber(m, 16)
+            if not n then return "" end
+            return string.char(n)
+        end)
+    end
+    local function openSoundSelector(wep, selection2)
+        local Menu = DermaMenu()
+        local submenus = {}
+        for _, data in ipairs(wowozela.GetSamples()) do
+            local category = data.category
 
+            submenus[category] = submenus[category] or Menu:AddSubMenu(category)
+        end
+
+        for _, data2 in ipairs(wowozela.GetSamples()) do
+            submenus[data2.category]:AddOption(data2.name, function()
+                wep.Pages[selection2.page][selection2.index] = data2
+                file.Write("wowozela_custom_page.txt",
+                    util.TableToJSON(wep.Pages[selection2.page], true))
+                wep:LoadPages()
+                play_non_looping_sound(wep, false, data2.path)
+            end)
+        end
+
+        Menu:AddSpacer()
+        local function soundError(reason)
+            LocalPlayer():ChatPrint(("Unable to load sound: %s"):format(reason))
+        end
+        Menu:AddOption("Custom...", function()
+            Derma_StringRequest("Sound (Mp3/Ogg)", "", "", function(text)
+                if text:sub(1, 4) ~= "http" then return end
+                text = text:gsub(" ", "%%20")
+                local filename = getFileName(text)
+                wowozela.PlayURL(text, "noplay", function(snd, _, err)
+                    if not snd or err then soundError("Invalid Ogg/Mp3!") return end
+                    lastHttp = snd
+                    snd:SetVolume(0.25)
+                    snd:Play()
+
+                    timer.Simple(1.5, function()
+                        if not IsValid(snd) then return end
+                        snd:Stop()
+                    end)
+
+                    wep.Pages[selection2.page][selection2.index] = {
+                        category = "",
+                        custom = "true",
+                        name = filename,
+                        path = text
+                    }
+                    file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
+                    wep:LoadPages()
+                end, function(reason)
+                    soundError(reason)
+                end)
+            end)
+        end)
+        Menu:Open()
+
+        freeze_mouse = {
+            ref = Menu,
+            x = gui.MouseX(),
+            y = gui.MouseY()
+        }
+    end
     hook.Add("PlayerBindPress", "WowozelaBindPress", function(ply, bind, pressed)
         local wep = ply:GetActiveWeapon()
         if IsValid(wep) and wep:GetClass() == "wowozela" then
@@ -928,50 +1000,7 @@ if CLIENT then
             if ply:KeyDown(IN_RELOAD) then
                 local selection2 = table.Copy(selection)
                 if bind:find("+menu") and pressed and selection2 then
-                    local Menu = DermaMenu()
-                    local submenus = {}
-                    for _, data in pairs(wowozela.GetSamples()) do
-                        if data.custom then continue end
-                        local category = data.category
-
-                        submenus[category] = submenus[category] or Menu:AddSubMenu(category)
-                    end
-
-                    for _, data2 in pairs(wowozela.GetSamples()) do
-                        if data2.custom then continue end
-                        submenus[data2.category]:AddOption(data2.name, function()
-                            wep.Pages[selection2.page][selection2.index] = data2
-                            file.Write("wowozela_custom_page.txt",
-                                util.TableToJSON(wep.Pages[selection2.page], true))
-                            wep:LoadPages()
-                            play_non_looping_sound(wep, false, data2.path)
-                        end)
-                    end
-
-                    Menu:AddSpacer()
-
-                    Menu:AddOption("Custom...", function()
-                        Derma_StringRequest("Sound (Mp3/Ogg)", "", "", function(text)
-                            local parts = string.Split(text, "/")
-                            local filename = string.Split(parts[#parts], ".")[1]
-                            wep.Pages[selection2.page][selection2.index] = {
-                                category = "websound",
-                                name = filename,
-                                custom = "true",
-                                path = text,
-                            }
-                            file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
-                            wep:LoadPages()
-                            play_non_looping_sound(wep, true, text)
-                        end)
-                    end)
-                    Menu:Open()
-
-                    freeze_mouse = {
-                        ref = Menu,
-                        x = gui.MouseX(),
-                        y = gui.MouseY()
-                    }
+                    openSoundSelector(wep, selection2)
                 end
 
                 if num and pressed and wep.Pages and wep.Pages[num] then

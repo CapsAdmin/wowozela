@@ -105,8 +105,21 @@ if CLIENT then
 
     local FOLDER = "wowozela_cache"
     file.CreateDir(FOLDER, "DATA")
-
-    local function GetURLSound(url, back)
+    local ID_OGG = "\x4F\x67\x67\x53"
+    local ID_ID3 = "\x49\x44\x33"
+    local ID_MP3_1 = "\xFF\xFB"
+    local ID_MP3_2 = "\xFF\xF3"
+    local ID_MP3_3 = "\xFF\xF2"
+    local FILE_LIMIT = 10 * 1024 * 1024
+    local function isOGGorMP3(data)
+        return  string.len(data) <= FILE_LIMIT and
+                (data:sub(1, 3) == ID_ID3 or
+                data:sub(1, 4) == ID_OGG or
+                data:sub(1, 2) == ID_MP3_1 or
+                data:sub(1, 2) == ID_MP3_2 or
+                data:sub(1, 2) == ID_MP3_3)
+    end
+    local function GetURLSound(url, back, fail)
         if url == "" then return end
         local path = FOLDER .. "/" .. util.CRC(url) .. ".dat"
 
@@ -117,17 +130,23 @@ if CLIENT then
         end
 
         http.Fetch(url,function(data,len,hdr,code)
+            if not isOGGorMP3(data) then
+                fail("Too big, invalid file, or download failed.")
+                return
+            end
             file.Write(path, data)
             back("data/" .. path)
-        end, nil, {
+        end, function(err)
+            fail(("HTTP %s"):format(err))
+        end, {
             ["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.214 Safari/537.36 Vivaldi/3.8.2259.42"
         })
     end
 
-    function wowozela.PlayURL(name, settings, callback)
+    function wowozela.PlayURL(name, settings, callback, failurecallback)
         GetURLSound(name, function(sndPath)
             sound.PlayFile(sndPath, settings, callback)
-        end)
+        end, failurecallback or function() end)
     end
 end
 
@@ -136,7 +155,7 @@ if SERVER then
     wowozela.customsamples = {}
     net.Receive("wowozela_customsample", function(len, ply)
         local samples = net.ReadTable()
-        local startID = ply:AccountID() * 8
+        local startID = 4500 + ply:EntIndex() * 12
 
         local newSampleIDs = {}
         for k,v in pairs(samples) do
@@ -339,22 +358,15 @@ do -- sample meta
                             processing = true
                             local func, newPath =  (isHttp and wowozela.PlayURL or sound.PlayFile), isHttp and path or "sound/" .. path
                             func(newPath, "3d noplay noblock", function(snd, errnum, err)
-                                if snd then
-                                    processing = false
-                                    self.paused = true
-                                    self.obj = snd
-                                    snd:EnableLooping(true)
-                                    snd:SetVolume(wowozela.intvolume or 1)
-                                    snd:SetPlaybackRate((sampler.Pitch or 100) / 100)
-
-                                    if sampler.Player == LocalPlayer() then
-                                        snd:Set3DEnabled(false)
-                                    else
-                                        snd:Set3DEnabled(true)
-                                    end
-
-                                    callback()
-                                end
+                                if not snd or err then return end
+                                processing = false
+                                self.paused = true
+                                self.obj = snd
+                                snd:EnableLooping(true)
+                                snd:SetVolume(wowozela.intvolume or 1)
+                                snd:SetPlaybackRate((sampler.Pitch or 100) / 100)
+                                snd:Set3DEnabled(sampler.Player ~= LocalPlayer())
+                                callback()
                             end)
                         end
                     end
