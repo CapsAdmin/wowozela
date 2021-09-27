@@ -68,14 +68,12 @@ if CLIENT then
 
 
         if not net.ReadBool() then
+            local updatedPly = 4500 + net.ReadUInt(6) * 12
             for _, ply in ipairs(player.GetAll()) do
-                if ply.wowozela_sampler and ply.wowozela_sampler.Samples then
-                    for i, v in pairs(wowozela.KnownSamples) do
-                        if v.custom then
-                            if IsValid(v.obj) then
-                                v.obj:Stop()
-                                v.obj = nil
-                            end
+                if ply.wowozela_sampler then
+                    for i = updatedPly, updatedPly + 11 do
+                        local v = wowozela.KnownSamples[i]
+                        if v then
                             ply.wowozela_sampler:SetSample(i, v.custom, v.path)
                         end
                     end
@@ -153,7 +151,7 @@ end
 if SERVER then
     util.AddNetworkString("wowozela_customsample")
     wowozela.customsamples = {}
-    net.Receive("wowozela_customsample", function(len, ply)
+    net.Receive("wowozela_customsample", function(_, ply)
         local samples = net.ReadTable()
         local startID = 4500 + ply:EntIndex() * 12
 
@@ -176,6 +174,7 @@ if SERVER then
         net.Start("wowozela_update_samples")
             net.WriteTable(wowozela.KnownSamples)
             net.WriteBool(false)
+            net.WriteUInt(ply:EntIndex(), 6)
         net.Broadcast()
 
         table.Add(wowozela.customsamples, newSampleIDs)
@@ -412,6 +411,10 @@ do -- sample meta
     end
 
     function META:SetSample(i, ishttp, path)
+        if self.Samples[i] and IsValid(self.Samples[i].obj) then
+            self.Samples[i].obj:Stop()
+            self.Samples[i].obj = nil
+        end
         self.Samples[i] = create_sound(path or wowozela.DefaultSound, ishttp, self)
     end
 
