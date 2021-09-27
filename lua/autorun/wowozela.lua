@@ -161,7 +161,9 @@ if SERVER then
     net.Receive("wowozela_customsample", function(_, ply)
         local samples = net.ReadTable()
         local startID = 4500 + ply:EntIndex() * 12
-
+        for I = startID, startID + 11 do
+            wowozela.KnownSamples[I] = nil
+        end
         local newSampleIDs = {}
         for k,v in pairs(samples) do
             wowozela.KnownSamples[startID + k] = {
