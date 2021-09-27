@@ -60,23 +60,30 @@ if CLIENT then
         net.SendToServer()
     end
 
-    net.Receive("wowozela_update_samples", function()
+    local function update_sample(ply, i, v)
+        local sampler = wowozela.GetSampler(ply)
+        if not sampler then return end
+        if v then
+            sampler:SetSample(i, v.custom, v.path)
+        elseif sampler.Samples and sampler.Samples[i] then
+            if IsValid(sampler.Samples[i].obj) then
+                sampler.Samples[i].obj:Stop()
+            end
+            sampler.Samples[i] = nil
+        end
+    end
 
+    net.Receive("wowozela_update_samples", function()
         for i, v in pairs(net.ReadTable()) do
             wowozela.KnownSamples[i] = v
         end
 
-
         if not net.ReadBool() then
             local updatedPly = 4500 + net.ReadUInt(6) * 12
             for _, ply in ipairs(player.GetAll()) do
-                if ply.wowozela_sampler then
-                    for i = updatedPly, updatedPly + 11 do
-                        local v = wowozela.KnownSamples[i]
-                        if v then
-                            ply.wowozela_sampler:SetSample(i, v.custom, v.path)
-                        end
-                    end
+                for i = updatedPly, updatedPly + 11 do
+                    local v = wowozela.KnownSamples[i]
+                    update_sample(ply, i, v)
                 end
             end
             return
