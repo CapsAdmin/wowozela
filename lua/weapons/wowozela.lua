@@ -986,6 +986,15 @@ if CLIENT then
                 end)
             end)
         end)
+
+        if wep.Pages[selection2.page][selection2.index] and wep.Pages[selection2.page][selection2.index].custom then
+            Menu:AddOption("Rename...", function()
+                Derma_StringRequest("New Name?", "", wep.Pages[selection2.page][selection2.index].name, function(text)
+                    wep.Pages[selection2.page][selection2.index].name = text
+                    file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
+                end)
+            end)
+        end
         Menu:Open()
 
         freeze_mouse = {
