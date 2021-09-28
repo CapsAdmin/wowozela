@@ -79,7 +79,7 @@ if CLIENT then
         end
 
         if not net.ReadBool() then
-            local updatedPly = 4500 + net.ReadUInt(6) * 12
+            local updatedPly = 4500 + net.ReadUInt(6) * 15
             for _, ply in ipairs(player.GetAll()) do
                 for i = updatedPly, updatedPly + 11 do
                     local v = wowozela.KnownSamples[i]
@@ -160,7 +160,7 @@ if SERVER then
     wowozela.customsamples = {}
     net.Receive("wowozela_customsample", function(_, ply)
         local samples = net.ReadTable()
-        local startID = 4500 + ply:EntIndex() * 12
+        local startID = 4500 + ply:EntIndex() * 15
         for I = startID, startID + 11 do
             wowozela.KnownSamples[I] = nil
         end

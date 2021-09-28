@@ -342,18 +342,18 @@ if CLIENT then
 
         for i, v in ipairs(self.Categories) do
             if v == "custom" then
-                for _, sample in pairs(self.Pages[i]) do
+                for k, sample in pairs(self.Pages[i]) do
                     if sample.custom then
-                        table.insert(customsamples, {
+                        customsamples[k] = {
                             sample.path,
                             sample.name
-                        })
+                        }
                     end
                 end
             end
         end
 
-        local cID = 4500 + LocalPlayer():EntIndex() * 12
+        local cID = 4500 + LocalPlayer():EntIndex() * 15
         local missingOne = false
         for k, newsample in next, customsamples do
             if not wowozela.GetSamples()[cID + k] or wowozela.GetSamples()[cID + k].path ~= newsample.path then
