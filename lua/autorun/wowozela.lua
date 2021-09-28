@@ -566,7 +566,7 @@ do -- sample meta
     function META:Think()
         if not self:CanPlay() or wowozela.disabled then
             if self.WasPlaying then
-                for _, csp in ipairs(self.Samples) do
+                for _, csp in pairs(self.Samples) do
                     if not csp.paused then
                         stop_sound(csp, self)
                     end
@@ -575,7 +575,6 @@ do -- sample meta
             end
             return
         end
-
 
         self.WasPlaying = true
         local ang = self:GetAngles()
