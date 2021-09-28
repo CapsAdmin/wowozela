@@ -156,9 +156,12 @@ if CLIENT then
 end
 
 if SERVER then
+    wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY})
     util.AddNetworkString("wowozela_customsample")
     wowozela.customsamples = {}
     net.Receive("wowozela_customsample", function(_, ply)
+        if not wowozela.allowcustomsamples:GetBool() then return end
+
         local samples = net.ReadTable()
         local startID = 4500 + ply:EntIndex() * 15
         for I = startID, startID + 11 do
