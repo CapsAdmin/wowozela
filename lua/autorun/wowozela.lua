@@ -156,7 +156,7 @@ if CLIENT then
 end
 
 if SERVER then
-    wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_ARCHIVE, FCVAR_NOTIFY})
+    wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_NOTIFY})
     util.AddNetworkString("wowozela_customsample")
     wowozela.customsamples = {}
     net.Receive("wowozela_customsample", function(_, ply)
