@@ -356,7 +356,7 @@ if CLIENT then
         local cID = 4500 + LocalPlayer():EntIndex() * 15
         local missingOne = false
         for k, newsample in next, customsamples do
-            if not wowozela.GetSamples()[cID + k] or wowozela.GetSamples()[cID + k].path ~= newsample.path then
+            if not wowozela.GetSamples()[cID + k] or wowozela.GetSamples()[cID + k].path ~= newsample[1]  or wowozela.GetSamples()[cID + k].path ~= newsample[2] then
                 missingOne = true
             end
         end
@@ -364,7 +364,6 @@ if CLIENT then
         if missingOne then
             wowozela.RequestCustomSamplesIndexes(customsamples)
         end
-
     end
     function SWEP:LoadPages()
 
@@ -451,7 +450,7 @@ if CLIENT then
         end
 
         for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
-            if sample.path == v.path then
+            if sample.path == v.path and sample.name == v.name then
                 return i
             end
         end
@@ -464,7 +463,7 @@ if CLIENT then
         end
 
         for i, v in pairs(self.Pages[self.CurrentPageIndex]) do
-            if sample.path == v.path then
+            if sample.path == v.path and sample.name == v.name  then
                 return i
             end
         end
@@ -479,7 +478,7 @@ if CLIENT then
         end
 
         for i, v in pairs(wowozela.GetSamples()) do
-            if sample.path == v.path then
+            if sample.path == v.path and sample.name == v.name then
                 return i
             end
         end
@@ -992,6 +991,7 @@ if CLIENT then
                 Derma_StringRequest("New Name?", "", wep.Pages[selection2.page][selection2.index].name, function(text)
                     wep.Pages[selection2.page][selection2.index].name = text
                     file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
+                    wep:LoadCustoms()
                 end)
             end)
         end
