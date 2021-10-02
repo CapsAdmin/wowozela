@@ -990,6 +990,16 @@ simple [[yp.shoutcast.com]]
 --- http://translate.google.com/translate_tts?&q=Hello%20World&ie=utf-8&client=tw-ob&tl=en
 simple [[translate.google.com]]
 
+
+
+-- END OF SHARED --
+
+-- Vocaroo
+--- Examples:
+--- https://media1.vocaroo.com/mp3/1mO2ie6J4r3O
+pattern [[media%d.vocaroo.com/mp3/]]
+
+
 function wowozela.URLWhitelist(url)
     for _, testPattern in pairs(URLWhiteList) do
         if testPattern[1] == TYPE_SIMPLE then
