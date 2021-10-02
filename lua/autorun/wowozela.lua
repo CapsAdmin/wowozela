@@ -887,6 +887,7 @@ simple [[pastebin.com/]]
 
 simple [[raw.githubusercontent.com/]]
 simple [[gist.githubusercontent.com/]]
+simple [[github.com/]]
 
 -- pomf
 -- note: there are a lot of forks of pomf so there are tons of sites. I only listed the mainly used ones. --Flex
