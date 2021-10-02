@@ -46,6 +46,8 @@ SWEP.RenderGroup = RENDERGROUP_BOTH
 function SWEP:SetupDataTables()
     self:NetworkVar("Int", 0, "NoteIndexLeft")
     self:NetworkVar("Int", 1, "NoteIndexRight")
+
+    self:NetworkVar("Bool", 0, "Looping")
 end
 
 function SWEP:PrintWeaponInfo()
@@ -83,6 +85,7 @@ function SWEP:Initialize()
     self.CurrentPageIndex = 1
     self:SetNoteIndexLeft(1)
     self:SetNoteIndexRight(1)
+    self:SetLooping(true)
 end
 
 if SERVER then
@@ -192,7 +195,10 @@ function SWEP:Holster()
 end
 
 function SWEP:OnKeyEvent(key, press)
-
+    if SERVER and key == IN_USE and press then
+        self:SetLooping(not self:GetLooping())
+        self:GetOwner():ChatPrint(("Looping is now %s."):format(self:GetLooping() and "enabled" or "disabled"))
+    end
 end
 
 function SWEP:_Think()

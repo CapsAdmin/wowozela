@@ -380,6 +380,7 @@ do -- sample meta
                                 if not snd or err then return end
                                 processing = false
                                 self.paused = true
+                                self.looping = true
                                 self.obj = snd
                                 snd:EnableLooping(true)
                                 snd:SetVolume(wowozela.intvolume or 1)
@@ -585,17 +586,22 @@ do -- sample meta
         end
 
         self.WasPlaying = true
-        local ang = self:GetAngles()
-
-        if self:IsKeyDown(IN_USE) then
-            if self.using_angle then
-                self:SetVolume(math.abs(ang.y - self.using_angle) / 20)
-            else
-                self.using_angle = ang.y
+        local wep = self.Player:GetActiveWeapon()
+        if wep.GetLooping and not wep:GetLooping() then
+            for k,v in pairs(self.Samples) do
+                if IsValid(v.obj) and v.looping then
+                    v.obj:EnableLooping(false)
+                    v.obj:SetTime(0)
+                    v.looping = false
+                end
             end
         else
-            self.using_angle = false
-            self:SetVolume(1)
+            for k,v in pairs(self.Samples) do
+                if not v.looping and IsValid(v.obj) then
+                    v.obj:EnableLooping(true)
+                    v.looping = true
+                end
+            end
         end
 
         self:SetPitch(self:GetPlayerPitch())
