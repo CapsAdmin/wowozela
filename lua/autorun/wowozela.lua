@@ -151,7 +151,7 @@ if CLIENT then
 
     function wowozela.PlayURL(name, settings, callback, failurecallback)
         if not wowozela.URLWhitelist(name) then
-            return failurecallback("Not a whitelisted URL.")
+            return failurecallback and failurecallback("Not a whitelisted URL.")
         end
         GetURLSound(name, function(sndPath)
             sound.PlayFile(sndPath, settings, callback)
