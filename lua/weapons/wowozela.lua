@@ -41,6 +41,7 @@ SWEP.DrawCrosshair = true
 SWEP.ViewModel = "models/weapons/v_hands.mdl"
 SWEP.WorldModel = "models/weapons/w_bugbait.mdl"
 SWEP.DrawWeaponInfoBox = true
+SWEP.RenderGroup = RENDERGROUP_BOTH
 
 function SWEP:SetupDataTables()
     self:NetworkVar("Int", 0, "NoteIndexLeft")
@@ -56,10 +57,6 @@ function SWEP:DrawWeaponSelection(x,y,w,h,a)
     surface.SetDrawColor(HSVToColor(RealTime() * 10, 1, 1))
     surface.SetMaterial(mat)
     surface.DrawTexturedRect(x,y-w / 6,w,w)
-end
-
-function SWEP:DrawWorldModel()
-    return true
 end
 
 function SWEP:CanPrimaryAttack()
@@ -594,6 +591,26 @@ if CLIENT then
         end
         return index / #wowozela.GetSamples() * 360
     end
+
+    function SWEP:DrawWorldModel()
+        return true
+    end
+
+    function SWEP:DrawWorldModelTranslucent()
+        if IsValid(self:GetOwner()) then return true end
+        local ang = (LocalPlayer():EyePos() - self:GetPos()):Angle()
+        ang:RotateAroundAxis(ang:Right(), 90)
+
+        local col = HSVToColor((CurTime() * 80) % 360, 1, 1)
+
+        local size = 256 + math.sin(CurTime() * 2) * 48
+        cam.Start3D2D(self:GetPos(), ang, 0.1)
+            surface.SetMaterial(circle_tex)
+            surface.SetDrawColor(col.r, col.g, col.b, 150)
+            surface.DrawTexturedRect(size * -0.5, size * -0.5, size, size)
+        cam.End3D2D()
+    end
+
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
