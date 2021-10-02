@@ -216,8 +216,6 @@ hook.Add("PlayerSwitchWeapon", "WowozelaDontSwap", function(ply, wep, newwep)
     end
 end)
 
-local selection = nil
-
 if CLIENT then
     surface.CreateFont("WowozelaFont", {
         font = "Roboto Bk",
@@ -611,6 +609,39 @@ if CLIENT then
         cam.End3D2D()
     end
 
+    local function get_selection(self)
+        if self.Categories[self.CurrentPageIndex] ~= "custom" then return end
+        local mouse_x, mouse_y = gui.MouseX(), gui.MouseY()
+        local center_x, center_y = ScrW() / 2, ScrH() / 2
+
+        local max = #self.Pages[self.CurrentPageIndex]
+
+        local radians = math.atan2(mouse_y - center_y, center_x - mouse_x)
+        local degrees = (math.deg(radians) - 90) % 360
+        local wedge_step = 360 / max
+        local mouse_far_enough = (Vector(center_x, center_y) - Vector(mouse_x, mouse_y)):Length2D()
+
+        if mouse_far_enough < 32 or mouse_far_enough > 175 then
+            mouse_far_enough = nil
+        end
+
+        for i = 1, max do
+            local wedge_size = ((i - 1) / max)
+            local wedge_angle = wedge_size * 360
+            if degrees >= wedge_angle and degrees <= (wedge_angle + wedge_step) and mouse_far_enough then
+                return {
+                    left_pressed = left_down,
+                    right_pressed = right_down,
+                    index = i,
+                    page = self.CurrentPageIndex,
+                    name = self.Pages[self.CurrentPageIndex][i] and
+                        self.Pages[self.CurrentPageIndex][i].name
+                }
+            end
+        end
+    end
+
+
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
@@ -747,19 +778,6 @@ if CLIENT then
                         wowozela.SetSampleIndexRight(sample_index)
                     end
                 end
-            end
-
-            if hovered_wedge_index and mouse_far_enough and self.Categories[self.CurrentPageIndex] == "custom" then
-                selection = {
-                    left_pressed = left_down,
-                    right_pressed = right_down,
-                    index = hovered_wedge_index,
-                    page = self.CurrentPageIndex,
-                    name = self.Pages[self.CurrentPageIndex][hovered_wedge_index] and
-                        self.Pages[self.CurrentPageIndex][hovered_wedge_index].name
-                }
-            else
-                selection = nil
             end
 
             surface.SetDrawColor(255, 255, 255, 255)
@@ -947,6 +965,8 @@ if CLIENT then
         end)
     end
     local function openSoundSelector(wep, selection2)
+        if not selection2 then return end
+
         local Menu = DermaMenu()
         local submenus = {}
         for _, data in ipairs(wowozela.GetSamples()) do
@@ -1030,9 +1050,8 @@ if CLIENT then
             end
 
             if ply:KeyDown(IN_RELOAD) then
-                local selection2 = table.Copy(selection)
-                if bind:find("+menu") and pressed and selection2 then
-                    openSoundSelector(wep, selection2)
+                if bind:find("+menu") and pressed then
+                    openSoundSelector(wep, get_selection(wep))
                 end
 
                 if num and pressed and wep.Pages and wep.Pages[num] then
