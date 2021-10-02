@@ -148,7 +148,11 @@ if CLIENT then
         })
     end
 
+
     function wowozela.PlayURL(name, settings, callback, failurecallback)
+        if not wowozela.URLWhitelist(name) then
+            return failurecallback("Not a whitelisted URL.")
+        end
         GetURLSound(name, function(sndPath)
             sound.PlayFile(sndPath, settings, callback)
         end, failurecallback or function() end)
@@ -824,4 +828,181 @@ if SERVER then
             wowozela.BroacastSamples(ply)
         end
     end)
+end
+
+
+---------------------------------------------
+-- https://github.com/Metastruct/gurl/     --
+---------------------------------------------
+local URLWhiteList = {}
+
+local TYPE_SIMPLE = 1
+local TYPE_PATTERN = 2
+local TYPE_BLACKLIST = 3
+
+local function pattern(pattern)
+  URLWhiteList[#URLWhiteList + 1] = {TYPE_PATTERN, pattern}
+end
+local function simple(txt)
+  URLWhiteList[#URLWhiteList + 1] = {TYPE_SIMPLE, txt}
+end
+local function blacklist(txt)
+  URLWhiteList[#URLWhiteList + 1] = {TYPE_BLACKLIST, txt}
+end
+
+
+simple [[www.dropbox.com/s/]]
+simple [[https://dl.dropboxusercontent.com/]]
+simple [[dl.dropbox.com/]] --Sometimes redirects to usercontent link
+
+-- OneDrive
+-- Examples: 
+-- https://onedrive.live.com/redir?resid=123!178&authkey=!gweg&v=3&ithint=abcd%2cefg
+
+simple [[onedrive.live.com/redir]]
+
+-- Google Drive
+--- Examples: 
+---  https://docs.google.com/uc?export=download&confirm=UYyi&id=0BxUpZqVaDxVPeENDM1RtZDRvaTA
+
+simple [[docs.google.com/uc]]
+
+-- Imgur
+--- Examples: 
+---  http://i.imgur.com/abcd123.xxx
+
+simple [[i.imgur.com/]]
+
+
+-- pastebin
+--- Examples: 
+---  http://pastebin.com/abcdef
+
+simple [[pastebin.com/]]
+
+-- github / gist
+--- Examples: 
+---  https://gist.githubusercontent.com/LUModder/f2b1c0c9bf98224f9679/raw/5644006aae8f0a8b930ac312324f46dd43839189/sh_sbdc.lua
+---  https://raw.githubusercontent.com/LUModder/FWP/master/weapon_template.txt
+
+simple [[raw.githubusercontent.com/]]
+simple [[gist.githubusercontent.com/]]
+
+-- pomf
+-- note: there are a lot of forks of pomf so there are tons of sites. I only listed the mainly used ones. --Flex
+--- Examples: 
+---  https://my.mixtape.moe/gxiznr.png
+---  http://a.1339.cf/fppyhby.txt
+---  http://b.1339.cf/fppyhby.txt
+---  http://a.pomf.cat/jefjtb.txt
+
+simple [[my.mixtape.moe/]]
+simple [[a.1339.cf/]]
+simple [[b.1339.cf/]]
+simple [[a.pomf.cat/]]
+
+-- TinyPic
+--- Examples: 
+---  http://i68.tinypic.com/24b3was.gif
+pattern [[i(.+)%.tinypic%.com/]]
+
+
+-- paste.ee
+--- Examples: 
+---  https://paste.ee/r/J3jle
+simple [[paste.ee/]]
+
+
+-- hastebin
+--- Examples: 
+---  http://hastebin.com/icuvacogig.txt
+
+simple [[hastebin.com/]]
+
+-- puush
+--- Examples:
+---  http://puu.sh/asd/qwe.obj
+simple [[puu.sh/]]
+
+-- Steam
+--- Examples:
+---  http://images.akamai.steamusercontent.com/ugc/367407720941694853/74457889F41A19BD66800C71663E9077FA440664/
+---  https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/4000/dca12980667e32ab072d79f5dbe91884056a03a2.jpg
+simple [[images.akamai.steamusercontent.com/]]
+simple [[steamcdn-a.akamaihd.net/]]
+simple [[steamcommunity.com/]]
+simple [[store.steampowered.com/]]
+blacklist [[steamcommunity.com/linkfilter/]]
+
+---------------------------------------------
+-- https://github.com/thegrb93/StarfallEx/ --
+---------------------------------------------
+
+-- Discord
+--- Examples:
+---  https://cdn.discordapp.com/attachments/269175189382758400/421572398689550338/unknown.png
+---  https://images-ext-2.discordapp.net/external/UVPTeOLUWSiDXGwwtZ68cofxU1uaA2vMb2ZCjRY8XXU/https/i.imgur.com/j0QGfKN.jpg?width=1202&height=677
+
+pattern [[cdn[%w-_]*.discordapp%.com/(.+)]]
+pattern [[images-([%w%-]+)%.discordapp%.net/external/(.+)]]
+
+-- Reddit
+--- Examples:
+---  https://i.redd.it/u46wumt13an01.jpg
+---  https://i.redditmedia.com/RowF7of6hQJAdnJPfgsA-o7ioo_uUzhwX96bPmnLo0I.jpg?w=320&s=116b72a949b6e4b8ac6c42487ffb9ad2
+---  https://preview.redd.it/injjlk3t6lb51.jpg?width=640&height=800&crop=smart&auto=webp&s=19261cc37b68ae0216bb855f8d4a77ef92b76937
+
+simple [[i.redditmedia.com]]
+simple [[i.redd.it]]
+simple [[preview.redd.it]]
+
+-- Furry things
+--- Examples:
+--- https://static1.e621.net/data/8f/db/8fdbc9af34698d470c90ca6cb69c5529.jpg
+
+simple [[static1.e621.net]]
+
+-- ipfs
+--- Examples:
+--- https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/I/m/Ellis_Sigil.jpg
+
+simple [[ipfs.io]]
+
+-- neocities
+--- Examples:
+--- https://fauux.neocities.org/LainDressSlow.gif
+
+pattern [[([%w-_]+)%.neocities%.org/(.+)]]
+
+-- Soundcloud
+--- Examples:
+--- https://i1.sndcdn.com/artworks-000046176006-0xtkjy-large.jpg
+pattern [[(%w+)%.sndcdn%.com/(.+)]]
+
+-- Shoutcast
+--- Examples:
+--- http://yp.shoutcast.com/sbin/tunein-station.pls?id=567807
+simple [[yp.shoutcast.com]]
+
+-- Google Translate API
+--- Examples:
+--- http://translate.google.com/translate_tts?&q=Hello%20World&ie=utf-8&client=tw-ob&tl=en
+simple [[translate.google.com]]
+
+function wowozela.URLWhitelist(url)
+    for _, testPattern in pairs(URLWhiteList) do
+        if testPattern[1] == TYPE_SIMPLE then
+            if string.find(url, testPattern[2]) then
+                return true
+            end
+        elseif testPattern[1] == TYPE_PATTERN then
+            if string.match(url, testPattern[2]) then
+                return true
+            end
+        elseif testPattern[1] == TYPE_BLACKLIST then
+            if string.find(url, testPattern[2]) then
+                return false
+            end
+        end
+    end
 end
