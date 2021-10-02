@@ -13,6 +13,7 @@ wowozela.ValidNotes = {
 wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
 
 wowozela.KnownSamples = wowozela.KnownSamples or {}
+wowozela.Samplers = wowozela.Samplers or {}
 
 function wowozela.GetSamples()
     return wowozela.KnownSamples
@@ -93,8 +94,9 @@ if CLIENT then
         wowozela.SetSampleIndexRight(1)
 
         for _, ply in ipairs(player.GetAll()) do
-            if ply.wowozela_sampler then
-                for _,v in pairs(ply.wowozela_sampler.Samples or {}) do
+            local sampler = wowozela.GetSampler(ply)
+            if sampler then
+                for _,v in pairs(sampler.Samples or {}) do
                     if v.obj then
                         v.obj:Stop()
                     end
@@ -283,6 +285,7 @@ function wowozela.KeyToButton(key)
     end
     return false
 end
+
 
 do -- sample meta
     local META = {}
@@ -610,6 +613,18 @@ do -- sample meta
             p:SetNextThink(CurTime())
         end
     end
+
+    function META:Destroy()
+        for _,v in pairs(self.Samples) do
+            if v.obj then
+                v.obj:Stop()
+                v.obj = nil
+            end
+        end
+
+        self.Samples = {}
+    end
+
     function META:MakeParticle()
         local pitch = self.Pitch
 
@@ -675,6 +690,8 @@ do -- sample meta
         local sampler = setmetatable({}, wowozela.SamplerMeta)
         sampler:Initialize(ply)
         ply.wowozela_sampler = sampler
+
+        wowozela.Samplers[ply:UserID()] = sampler
         return sampler
     end
 
@@ -712,6 +729,13 @@ do -- hooks
 
             if sampler and sampler.Think then
                 sampler:Think()
+            end
+        end
+
+        for k, sampler in next, wowozela.Samplers do
+            if not IsValid(sampler.Player) then
+                sampler:Destroy()
+                wowozela.Samplers[k] = nil
             end
         end
     end

@@ -130,8 +130,9 @@ if CLIENT then
     end
 
     function EnableUnlimitedPitch(ply)
+        local sampler = wowozela.GetSampler(ply)
+        if not sampler then return end
 
-        if not ply.wowozela_sampler then return end
         if ply.wowozela_head_cb then return end
 
         ply.wowozela_head_cb = ply:AddCallback("BuildBonePositions", function(oply)
@@ -140,7 +141,7 @@ if CLIENT then
             if head then
                 local m = oply:GetBoneMatrix(head)
                 if m then
-                    local pitch = math.NormalizeAngle(oply.wowozela_sampler:GetPlayerPitch() * -89)
+                    local pitch = math.NormalizeAngle(sampler:GetPlayerPitch() * -89)
                     local yaw = oply:EyeAngles().y
 
                     local vec = Angle(pitch, yaw):Forward() * 100
