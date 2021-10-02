@@ -235,11 +235,6 @@ if SERVER then
                         path = "wowozela/samples/" .. directory .. "/" .. file_name,
                         name = file_name:match("(.+)%.")
                     })
-
-                    if SERVER then
-                        --resource.AddFile("sound/wowozela/samples/" .. file_name)
-                        resource.AddWorkshop("108170491")
-                    end
                 end
             end
         end
@@ -254,6 +249,8 @@ if SERVER then
     util.AddNetworkString("wowozela_update_samples")
     util.AddNetworkString("wowozela_key")
     util.AddNetworkString("wowozela_sample")
+
+    resource.AddWorkshop("108170491")
 
     function wowozela.BroacastSamples(ply)
         net.Start("wowozela_update_samples")
