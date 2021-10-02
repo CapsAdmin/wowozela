@@ -841,10 +841,10 @@ local TYPE_PATTERN = 2
 local TYPE_BLACKLIST = 3
 
 local function pattern(pattern)
-  URLWhiteList[#URLWhiteList + 1] = {TYPE_PATTERN, pattern}
+  URLWhiteList[#URLWhiteList + 1] = {TYPE_PATTERN, "^http[s]?://" .. pattern}
 end
 local function simple(txt)
-  URLWhiteList[#URLWhiteList + 1] = {TYPE_SIMPLE, txt}
+  URLWhiteList[#URLWhiteList + 1] = {TYPE_SIMPLE, "^http[s]?://" .. txt}
 end
 local function blacklist(txt)
   URLWhiteList[#URLWhiteList + 1] = {TYPE_BLACKLIST, txt}
