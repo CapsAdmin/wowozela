@@ -195,6 +195,7 @@ function SWEP:Holster()
 end
 
 function SWEP:OnKeyEvent(key, press)
+    if self.GetLooping == nil then return end
     if SERVER and key == IN_USE and press then
         self:SetLooping(not self:GetLooping())
         self:GetOwner():ChatPrint(("Looping is now %s."):format(self:GetLooping() and "enabled" or "disabled"))
@@ -500,7 +501,7 @@ if CLIENT then
             wowozela.PlayURL(path, "noplay", function(snd, _, err)
                 if not snd or err then return end
                 lastHttp = snd
-                snd:SetVolume(0.25)
+                snd:SetVolume(wowozela.intvolume or 0.25)
                 snd:Play()
 
                 timer.Simple(1.5, function()
@@ -1009,7 +1010,7 @@ if CLIENT then
                 wowozela.PlayURL(text, "noplay", function(snd, _, err)
                     if not snd or err then soundError("Invalid Ogg/Mp3!") return end
                     lastHttp = snd
-                    snd:SetVolume(0.25)
+                    snd:SetVolume(wowozela.intvolume or 0.25)
                     snd:Play()
 
                     timer.Simple(1.5, function()
