@@ -479,6 +479,7 @@ if CLIENT then
 
         for i, v in pairs(wowozela.GetSamples()) do
             if sample.path == v.path and sample.name == v.name then
+                if v.custom and v.owner ~= LocalPlayer():EntIndex() then continue end
                 return i
             end
         end

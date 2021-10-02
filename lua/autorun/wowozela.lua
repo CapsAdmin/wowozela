@@ -171,6 +171,7 @@ if SERVER then
         for k,v in pairs(samples) do
             wowozela.KnownSamples[startID + k] = {
                 category = "custom-sample-hidden",
+                owner = ply:EntIndex(),
                 custom = true,
                 path = v[1],
                 name = v[2]
