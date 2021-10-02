@@ -597,8 +597,9 @@ do -- sample meta
             end
         else
             for k,v in pairs(self.Samples) do
-                if not v.looping and IsValid(v.obj) then
+                if IsValid(v.obj) and not v.looping then
                     v.obj:EnableLooping(true)
+                    v.obj:SetTime(0)
                     v.looping = true
                 end
             end
