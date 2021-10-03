@@ -163,8 +163,6 @@ end
 
 if SERVER then
     wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_NOTIFY})
-    util.AddNetworkString("wowozela_customsample")
-    wowozela.customsamples = {}
     net.Receive("wowozela_customsample", function(_, ply)
         if not wowozela.allowcustomsamples:GetBool() then return end
 
@@ -173,9 +171,10 @@ if SERVER then
         for I = startID, startID + 11 do
             wowozela.KnownSamples[I] = nil
         end
-        local newSampleIDs = {}
+
+        local newSamples = {}
         for k,v in pairs(samples) do
-            wowozela.KnownSamples[startID + k] = {
+            local newSample = {
                 category = "custom-sample-hidden",
                 owner = ply:EntIndex(),
                 custom = true,
@@ -183,20 +182,15 @@ if SERVER then
                 name = v[2]
             }
 
-            newSampleIDs[startID + k] = {
-                v[1],
-                v[2],
-                ply:SteamID64()
-            }
+            wowozela.KnownSamples[startID + k] = newSample
+            newSamples[startID + k] = newSample
         end
 
         net.Start("wowozela_update_samples")
-            net.WriteTable(wowozela.KnownSamples)
+            net.WriteTable(newSamples)
             net.WriteBool(false)
             net.WriteUInt(ply:EntIndex(), 6)
         net.Broadcast()
-
-        table.Add(wowozela.customsamples, newSampleIDs)
     end)
 
 
@@ -246,6 +240,7 @@ if SERVER then
 
     wowozela.LoadSamples()
 
+    util.AddNetworkString("wowozela_customsample")
     util.AddNetworkString("wowozela_update_samples")
     util.AddNetworkString("wowozela_key")
     util.AddNetworkString("wowozela_sample")
