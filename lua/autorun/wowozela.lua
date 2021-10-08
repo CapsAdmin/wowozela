@@ -875,7 +875,7 @@ end
 
 
 simple [[www.dropbox.com/s/]]
-simple [[https://dl.dropboxusercontent.com/]]
+simple [[dl.dropboxusercontent.com/]]
 simple [[dl.dropbox.com/]] --Sometimes redirects to usercontent link
 
 -- OneDrive
