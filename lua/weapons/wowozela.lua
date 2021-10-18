@@ -891,7 +891,7 @@ if CLIENT then
             local perSeg = 10
             local scale = (ScrH() / 3) / (perSeg * 10)
 
-            local curr_pitch = LocalPlayer().wowozela_real_pitch * -1
+            local curr_pitch = (LocalPlayer().wowozela_real_pitch or 0) * -1
             local offset = (curr_pitch % perSeg)
             local currOctave = (curr_pitch - offset) / perSeg
             for I = -5, 5, 1 do
