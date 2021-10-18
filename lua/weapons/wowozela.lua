@@ -243,6 +243,12 @@ if CLIENT then
         weight = 1000
     })
 
+    surface.CreateFont("WowozelaNoteSmall", {
+        font = "Roboto Bk",
+        size = 12,
+        weight = 100
+    })
+
     local left_mouse_button_tex = Material("gui/lmb.png")
     local right_mouse_button_tex = Material("gui/rmb.png")
 
@@ -879,6 +885,36 @@ if CLIENT then
         if vol and vol:GetFloat() <= 0.01 then
             draw.SimpleText("Warning your wowozela_volume is set to 0!", "WowozelaFont", center_x, ScrH() - 10,
                 Color(255, 255, 255, 150), TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+        end
+
+        if wowozela.pitchbar and wowozela.pitchbar:GetBool() then
+            local perSeg = 10
+            local scale = (ScrH() / 3) / (perSeg * 10)
+
+            local curr_pitch = LocalPlayer().wowozela_real_pitch * -1
+            local offset = (curr_pitch % perSeg)
+            local currOctave = (curr_pitch - offset) / perSeg
+            for I = -5, 5, 1 do
+                local col = Color(255, 255, 255, 255)
+                local lineY = center_y + ((I * perSeg) + offset) * scale
+                surface.SetDrawColor(currOctave - I == 0 and Color(255, 100, 100, 255) or col)
+                surface.DrawLine(ScrW() - 15, lineY, ScrW(), lineY)
+
+                lineY = lineY + perSeg / 2 * scale
+                surface.SetDrawColor(col)
+                surface.DrawLine(ScrW() - 7.5, lineY, ScrW(), lineY)
+            end
+
+            surface.SetDrawColor(Color(255, 255, 255, 150))
+            surface.DrawLine(ScrW() - 18, center_y, ScrW(), center_y)
+            draw.Text({
+                text = ("%0.01f"):format(curr_pitch),
+                color = Color(255, 255, 255, 255),
+                pos = {ScrW() - 19, center_y},
+                xalign = TEXT_ALIGN_RIGHT,
+                yalign = TEXT_ALIGN_CENTER,
+                font = "WowozelaNoteSmall"
+            })
         end
     end
 
