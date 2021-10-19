@@ -906,11 +906,11 @@ if CLIENT then
                 col_white.a = 255 * (1 - math.min(math.abs(I + offsetScale) / 4.5, 1))
                 col_red.a = col_white.a
 
-                surface.SetDrawColor(currOctave - I == 0 and col_red or col_white)
+                surface.SetDrawColor((currOctave - I) % (90 / perSeg) == 0 and col_red or col_white)
                 surface.DrawLine(ScrW() - (I % 1 == 0.5 and 7.5 or 15), lineY, ScrW(), lineY)
             end
 
-            surface.SetDrawColor(Color(255, 255, 255, 150))
+            surface.SetDrawColor(Color(0, 255, 55, 120))
             surface.DrawLine(ScrW() - 18, center_y, ScrW(), center_y)
             draw.Text({
                 text = ("%0.01f"):format(curr_pitch),
