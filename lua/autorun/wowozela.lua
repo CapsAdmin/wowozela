@@ -441,7 +441,7 @@ do -- sample meta
         end
 
         local lastPitch = self.Pitch
-        self.Pitch = math.Clamp(math.floor((100 * 2 ^ num) * 10) / 10, 0.1, 2048)
+        self.Pitch = math.Clamp(math.floor((100 * 2 ^ num) * 100) / 100, 0.01, 2048)
         if lastPitch ~= self.Pitch then
             for _, sample in pairs(self.Samples) do
                 set_pitch(sample, self.Pitch, self)
