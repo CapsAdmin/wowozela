@@ -197,6 +197,9 @@ end
 function SWEP:OnKeyEvent(key, press)
     if self.GetLooping == nil then return end
     if SERVER and key == IN_USE and press then
+        local trace = self:GetOwner():GetEyeTrace()
+        if trace.StartPos:Distance(trace.HitPos) < 50 then return end
+
         self:SetLooping(not self:GetLooping())
         self:GetOwner():ChatPrint(("Looping is now %s."):format(self:GetLooping() and "enabled" or "disabled"))
     end
@@ -656,6 +659,8 @@ if CLIENT then
     end
 
 
+    local col_white = Color(255, 255, 255, 255)
+    local col_red = Color(255, 0, 0, 255)
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
@@ -888,21 +893,20 @@ if CLIENT then
         end
 
         if wowozela.pitchbar and wowozela.pitchbar:GetBool() then
-            local perSeg = 10
-            local scale = (ScrH() / 3) / (perSeg * 10)
+            local perSeg = 15
+            local scale = (ScrH() / 3) / 10
 
             local curr_pitch = (LocalPlayer().wowozela_real_pitch or 0) * -1
             local offset = (curr_pitch % perSeg)
+            local offsetScale = offset / perSeg
             local currOctave = (curr_pitch - offset) / perSeg
-            for I = -5, 5, 1 do
-                local col = Color(255, 255, 255, 255)
-                local lineY = center_y + ((I * perSeg) + offset) * scale
-                surface.SetDrawColor(currOctave - I == 0 and Color(255, 100, 100, 255) or col)
-                surface.DrawLine(ScrW() - 15, lineY, ScrW(), lineY)
+            for I = -5, 4, 0.5 do
+                local lineY = center_y + (I + offsetScale) * scale
+                col_white.a = 255 * (1 - math.min(math.abs(I + offsetScale) / 4.5, 1))
+                col_red.a = col_white.a
 
-                lineY = lineY + perSeg / 2 * scale
-                surface.SetDrawColor(col)
-                surface.DrawLine(ScrW() - 7.5, lineY, ScrW(), lineY)
+                surface.SetDrawColor(currOctave - I == 0 and col_red or col_white)
+                surface.DrawLine(ScrW() - (I % 1 == 0.5 and 7.5 or 15), lineY, ScrW(), lineY)
             end
 
             surface.SetDrawColor(Color(255, 255, 255, 150))
