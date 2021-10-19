@@ -592,6 +592,7 @@ if CLIENT then
     local freeze_mouse
 
     function SWEP:DrawHelp(center_x)
+        if wowozela.help and not wowozela.help:GetBool() then return end
         local keyName = input.LookupBinding("+menu", true) or "<+menu not bound>"
 
         draw_lines(center_x, ScrH(),
@@ -694,7 +695,7 @@ if CLIENT then
 
         local in_menu = self:GetOwner():KeyDown(IN_RELOAD)
 
-        if show_help_text then
+        if show_help_text and (not wowozela.help or wowozela.help:GetBool()) then
             draw_lines(center_x, ScrH(), {"to select different sounds, hold " ..
                 (input.LookupBinding("+reload", true) or "<+reload not bound>")})
         end
