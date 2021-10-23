@@ -891,7 +891,7 @@ simple [[onedrive.live.com/redir]]
 ---  https://docs.google.com/uc?export=download&confirm=UYyi&id=0BxUpZqVaDxVPeENDM1RtZDRvaTA
 
 simple [[docs.google.com/uc]]
-
+--[=[
 -- Imgur
 --- Examples: 
 ---  http://i.imgur.com/abcd123.xxx
@@ -904,6 +904,7 @@ simple [[i.imgur.com/]]
 ---  http://pastebin.com/abcdef
 
 simple [[pastebin.com/]]
+]=]
 
 -- github / gist
 --- Examples: 
@@ -927,6 +928,7 @@ simple [[a.1339.cf/]]
 simple [[b.1339.cf/]]
 simple [[a.pomf.cat/]]
 
+--[=[
 -- TinyPic
 --- Examples: 
 ---  http://i68.tinypic.com/24b3was.gif
@@ -942,8 +944,8 @@ simple [[paste.ee/]]
 -- hastebin
 --- Examples: 
 ---  http://hastebin.com/icuvacogig.txt
-
 simple [[hastebin.com/]]
+]=]
 
 -- puush
 --- Examples:
@@ -981,13 +983,13 @@ pattern [[images-([%w%-]+)%.discordapp%.net/external/(.+)]]
 simple [[i.redditmedia.com]]
 simple [[i.redd.it]]
 simple [[preview.redd.it]]
-
+--[=[
 -- Furry things
 --- Examples:
 --- https://static1.e621.net/data/8f/db/8fdbc9af34698d470c90ca6cb69c5529.jpg
 
 simple [[static1.e621.net]]
-
+]=]
 -- ipfs
 --- Examples:
 --- https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/I/m/Ellis_Sigil.jpg
@@ -1000,6 +1002,7 @@ simple [[ipfs.io]]
 
 pattern [[([%w-_]+)%.neocities%.org/(.+)]]
 
+--[=[
 -- Soundcloud
 --- Examples:
 --- https://i1.sndcdn.com/artworks-000046176006-0xtkjy-large.jpg
@@ -1014,7 +1017,7 @@ simple [[yp.shoutcast.com]]
 --- Examples:
 --- http://translate.google.com/translate_tts?&q=Hello%20World&ie=utf-8&client=tw-ob&tl=en
 simple [[translate.google.com]]
-
+]=]
 
 
 -- END OF SHARED --
