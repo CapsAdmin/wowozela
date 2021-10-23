@@ -1039,7 +1039,7 @@ if CLIENT then
             LocalPlayer():ChatPrint(("Unable to load sound: %s"):format(reason))
         end
         Menu:AddOption("Custom...", function()
-            Derma_StringRequest("Sound (Mp3/Ogg)", "", "", function(text)
+            Derma_StringRequest("Sound (Mp3/Ogg)", "Insert a web-hosted ogg or mp3.\n(GitHub, Vocaroo, Dropbox, Puush, Google Drive or similar sites)", "", function(text)
                 if text:sub(1, 4) ~= "http" then return end
 
                 if text:sub(1, 19) == "https://github.com/" and text:sub(-9) ~= "?raw=true" then

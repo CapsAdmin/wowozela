@@ -863,7 +863,7 @@ local URLWhiteList = {}
 
 local TYPE_SIMPLE = 1
 local TYPE_PATTERN = 2
-local TYPE_BLACKLIST = 3
+local TYPE_BLACKLIST = 4
 
 local function pattern(pattern)
   URLWhiteList[#URLWhiteList + 1] = {TYPE_PATTERN, "^http[s]?://" .. pattern}
@@ -914,6 +914,7 @@ simple [[pastebin.com/]]
 simple [[raw.githubusercontent.com/]]
 simple [[gist.githubusercontent.com/]]
 simple [[github.com/]]
+simple [[www.github.com/]]
 
 -- pomf
 -- note: there are a lot of forks of pomf so there are tons of sites. I only listed the mainly used ones. --Flex
@@ -959,8 +960,10 @@ simple [[puu.sh/]]
 simple [[images.akamai.steamusercontent.com/]]
 simple [[steamcdn-a.akamaihd.net/]]
 simple [[steamcommunity.com/]]
+simple [[www.steamcommunity.com/]]
 simple [[store.steampowered.com/]]
 blacklist [[steamcommunity.com/linkfilter/]]
+blacklist [[www.steamcommunity.com/linkfilter/]]
 
 ---------------------------------------------
 -- https://github.com/thegrb93/StarfallEx/ --
@@ -995,6 +998,7 @@ simple [[static1.e621.net]]
 --- https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/I/m/Ellis_Sigil.jpg
 
 simple [[ipfs.io]]
+simple [[www.ipfs.io]]
 
 -- neocities
 --- Examples:
@@ -1029,19 +1033,24 @@ pattern [[media%d.vocaroo.com/mp3/]]
 
 
 function wowozela.URLWhitelist(url)
+    local out = 0x000
     for _, testPattern in pairs(URLWhiteList) do
         if testPattern[1] == TYPE_SIMPLE then
             if string.find(url, testPattern[2]) then
-                return true
+                out = bit.bor(out, TYPE_SIMPLE)
             end
         elseif testPattern[1] == TYPE_PATTERN then
             if string.match(url, testPattern[2]) then
-                return true
+                out = bit.bor(out, TYPE_PATTERN)
             end
         elseif testPattern[1] == TYPE_BLACKLIST then
             if string.find(url, testPattern[2]) then
-                return false
+                out = bit.bor(out, TYPE_BLACKLIST)
             end
         end
     end
+
+    if bit.band(out, TYPE_BLACKLIST) == TYPE_BLACKLIST then return false end
+    if bit.band(out, TYPE_SIMPLE) == TYPE_SIMPLE or bit.band(out, TYPE_PATTERN) == TYPE_PATTERN then return true end
+    return false
 end
