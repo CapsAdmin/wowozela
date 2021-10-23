@@ -1034,11 +1034,11 @@ if CLIENT then
             end)
         end
 
-        Menu:AddSpacer()
+        
         local function soundError(reason)
             LocalPlayer():ChatPrint(("Unable to load sound: %s"):format(reason))
         end
-        Menu:AddOption("Custom...", function()
+        Menu:AddOption("custom...", function()
             Derma_StringRequest("Sound (Mp3/Ogg)", "Insert a web-hosted ogg or mp3.\n(GitHub, Vocaroo, Dropbox, Puush, Google Drive or similar sites)", "", function(text)
                 if text:sub(1, 4) ~= "http" then return end
 
@@ -1074,7 +1074,8 @@ if CLIENT then
         end)
 
         if wep.Pages[selection2.page][selection2.index] and wep.Pages[selection2.page][selection2.index].custom then
-            Menu:AddOption("Rename...", function()
+            Menu:AddSpacer()
+            Menu:AddOption("rename...", function()
                 Derma_StringRequest("New Name?", "", wep.Pages[selection2.page][selection2.index].name, function(text)
                     wep.Pages[selection2.page][selection2.index].name = text
                     file.Write("wowozela_custom_page.txt", util.TableToJSON(wep.Pages[selection2.page], true))
