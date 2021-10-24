@@ -152,11 +152,27 @@ if CLIENT then
         })
     end
 
+    local patterns = {
+        ["drive.google.com/file/d/([%d%w]+)/view"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+    }
+    function wowozela.ProcessURL(url)
+        for pattern, replace in pairs(patterns) do
+            local match = string.match(url, pattern)
+            if match then
+                return string.format(replace, match)
+            end
+        end
+
+        return url
+    end
 
     function wowozela.PlayURL(name, settings, callback, failurecallback)
+        if #name == 0 then return failurecallback and failurecallback("Empty URL?") end
         if not wowozela.URLWhitelist(name) then
             return failurecallback and failurecallback("Not a whitelisted URL.")
         end
+
+        name = wowozela.ProcessURL(name)
         GetURLSound(name, function(sndPath)
             sound.PlayFile(sndPath, settings, callback)
         end, failurecallback or function() end)
@@ -891,6 +907,9 @@ simple [[onedrive.live.com/redir]]
 ---  https://docs.google.com/uc?export=download&confirm=UYyi&id=0BxUpZqVaDxVPeENDM1RtZDRvaTA
 
 simple [[docs.google.com/uc]]
+simple [[drive.google.com/file/d/]]
+simple [[drive.google.com/u/0/uc]]
+
 --[=[
 -- Imgur
 --- Examples: 
