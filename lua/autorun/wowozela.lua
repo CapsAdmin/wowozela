@@ -153,7 +153,11 @@ if CLIENT then
     end
 
     local patterns = {
-        ["drive.google.com/file/d/([%d%w]+)/view"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/file/d/([%d%w]+)/view"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://www%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
+        ["^https?://www%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s",
+        ["^https?://dl%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
+        ["^https?://dl%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s"
     }
     function wowozela.ProcessURL(url)
         for pattern, replace in pairs(patterns) do
