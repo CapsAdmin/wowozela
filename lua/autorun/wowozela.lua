@@ -159,7 +159,8 @@ if CLIENT then
         ["^https?://www%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://www%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://dl%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
-        ["^https?://dl%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s"
+        ["^https?://dl%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s",
+        ["^https://vocaroo.com/(.+)$"] = "https://media1.vocaroo.com/mp3/%s",
     }
     function wowozela.ProcessURL(url)
         for pattern, replace in pairs(patterns) do
@@ -1055,7 +1056,9 @@ simple [[translate.google.com]]
 -- Vocaroo
 --- Examples:
 --- https://media1.vocaroo.com/mp3/1mO2ie6J4r3O
+--- http://vocaroo.com/16aWnwy2hwVH
 pattern [[media%d.vocaroo.com/mp3/]]
+simple [[vocaroo.com/]]
 
 
 function wowozela.URLWhitelist(url)
