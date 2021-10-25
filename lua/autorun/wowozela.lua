@@ -153,7 +153,9 @@ if CLIENT then
     end
 
     local patterns = {
-        ["^https?://drive%.google%.com/file/d/([%d%w]+)/view"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/file/d/([%d%w]+)/"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/file/d/([%d%w]+)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/open%?id=([%d%w]+)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
         ["^https?://www%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://www%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://dl%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
@@ -913,6 +915,7 @@ simple [[onedrive.live.com/redir]]
 simple [[docs.google.com/uc]]
 simple [[drive.google.com/file/d/]]
 simple [[drive.google.com/u/0/uc]]
+simple [[drive.google.com/open]]
 
 --[=[
 -- Imgur
