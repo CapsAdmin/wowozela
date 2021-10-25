@@ -495,7 +495,7 @@ do -- sample meta
             local sampler = wowozela.GetSampler(ply)
 
             if sampler and sampler.Samples then
-                for _, sample in ipairs(sampler.Samples) do
+                for _, sample in pairs(sampler.Samples) do
                     set_volume(sample, sampler.Volume, sampler)
                 end
             end
