@@ -1017,6 +1017,24 @@ if CLIENT then
             return string.char(n)
         end)
     end
+    local searchForName
+    searchForName = function(pageTbl, filename)
+        local found = false
+        for k,v in pairs(pageTbl) do
+            if v.name == filename then
+                filename = filename .. "2"
+                found = true
+            end
+        end
+        print(found)
+        if found then
+            return searchForName(pageTbl, filename)
+        else
+            return filename
+        end
+    end
+
+
     local function openSoundSelector(wep, selection2)
         if not selection2 then return end
 
@@ -1062,6 +1080,7 @@ if CLIENT then
                         snd:Stop()
                     end)
 
+                    filename = searchForName(wep.Pages[selection2.page], filename)
                     wep.Pages[selection2.page][selection2.index] = {
                         category = "",
                         custom = "true",
