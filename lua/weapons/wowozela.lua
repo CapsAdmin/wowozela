@@ -1017,17 +1017,18 @@ if CLIENT then
             return string.char(n)
         end)
     end
+
     local searchForName
-    searchForName = function(pageTbl, filename)
+    searchForName = function(pageTbl, currentSlot, filename)
         local found = false
         for k,v in pairs(pageTbl) do
-            if v.name == filename then
+            if v.name == filename and k ~= currentSlot then
                 filename = filename .. "2"
                 found = true
             end
         end
         if found then
-            return searchForName(pageTbl, filename)
+            return searchForName(pageTbl, currentSlot, filename)
         else
             return filename
         end
@@ -1060,6 +1061,8 @@ if CLIENT then
         end
         Menu:AddOption("custom...", function()
             Derma_StringRequest("Sound (Mp3/Ogg)", "Insert a web-hosted ogg or mp3.\n(GitHub, Vocaroo, Dropbox, Puush, Google Drive or similar sites)", "", function(text)
+                local subtext = nil
+                text, subtext = wowozela.ProcessURL(text)
                 if text:sub(1, 4) ~= "http" then return end
 
                 if text:sub(1, 19) == "https://github.com/" and text:sub(-9) ~= "?raw=true" then
@@ -1067,7 +1070,7 @@ if CLIENT then
                 end
 
                 text = text:gsub(" ", "%%20")
-                local filename = getFileName(text)
+                local filename = getFileName(subtext or text)
                 wowozela.PlayURL(text, "noplay", function(snd, _, err)
                     if not snd or err then soundError("Invalid Ogg/Mp3!") return end
                     lastHttp = snd
@@ -1079,7 +1082,7 @@ if CLIENT then
                         snd:Stop()
                     end)
 
-                    filename = searchForName(wep.Pages[selection2.page], filename)
+                    filename = searchForName(wep.Pages[selection2.page], selection2.index, filename)
                     wep.Pages[selection2.page][selection2.index] = {
                         category = "",
                         custom = "true",

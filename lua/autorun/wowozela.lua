@@ -168,7 +168,7 @@ if CLIENT then
         for pattern, replace in pairs(patterns) do
             local match = string.match(url, pattern)
             if match then
-                return string.format(replace, match)
+                return string.format(replace, match), match
             end
         end
 
