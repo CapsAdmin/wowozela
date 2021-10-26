@@ -1026,7 +1026,6 @@ if CLIENT then
                 found = true
             end
         end
-        print(found)
         if found then
             return searchForName(pageTbl, filename)
         else
