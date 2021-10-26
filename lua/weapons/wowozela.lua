@@ -194,9 +194,13 @@ function SWEP:Holster()
     return false
 end
 
+
 function SWEP:OnKeyEvent(key, press)
     if self.GetLooping == nil then return end
     if SERVER and key == IN_USE and press then
+        if CurTime() - (self.LastUse or 0) <= 0.25 then return end
+        self.LastUse = CurTime()
+
         local trace = self:GetOwner():GetEyeTrace()
         if trace.StartPos:Distance(trace.HitPos) < 50 then return end
 

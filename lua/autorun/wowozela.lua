@@ -119,14 +119,14 @@ if CLIENT then
     local ID_MP3_1 = "\xFF\xFB"
     local ID_MP3_2 = "\xFF\xF3"
     local ID_MP3_3 = "\xFF\xF2"
-    local FILE_LIMIT = 10 * 1024 * 1024
+    local FILE_LIMIT_MB = 10
+    local FILE_LIMIT = FILE_LIMIT_MB * 1024 * 1024
     local function isOGGorMP3(data)
-        return  string.len(data) <= FILE_LIMIT and
-                (data:sub(1, 3) == ID_ID3 or
+        return  data:sub(1, 3) == ID_ID3 or
                 data:sub(1, 4) == ID_OGG or
                 data:sub(1, 2) == ID_MP3_1 or
                 data:sub(1, 2) == ID_MP3_2 or
-                data:sub(1, 2) == ID_MP3_3)
+                data:sub(1, 2) == ID_MP3_3
     end
     local function GetURLSound(url, back, fail)
         if url == "" then return end
@@ -139,9 +139,11 @@ if CLIENT then
         end
 
         http.Fetch(url,function(data,len,hdr,code)
+            if string.len(data) > FILE_LIMIT then
+                return fail(("Too big (>%s MB)."):format(FILE_LIMIT_MB))
+            end
             if not isOGGorMP3(data) then
-                fail("Too big, invalid file, or download failed.")
-                return
+                return fail("Not an ogg/mp3, or download failed.")
             end
             file.Write(path, data)
             back("data/" .. path)
@@ -153,9 +155,9 @@ if CLIENT then
     end
 
     local patterns = {
-        ["^https?://drive%.google%.com/file/d/([%d%w]+)/"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
-        ["^https?://drive%.google%.com/file/d/([%d%w]+)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
-        ["^https?://drive%.google%.com/open%?id=([%d%w]+)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/file/d/(.-)/"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/file/d/(.-)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
+        ["^https?://drive%.google%.com/open%?id=(.-)$"] = "https://drive.google.com/u/0/uc?id=%s&export=download",
         ["^https?://www%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://www%.dropbox%.com/s/(.+)$"] = "https://dl.dropboxusercontent.com/s/%s",
         ["^https?://dl%.dropbox%.com/s/(.+)%?dl%=[01]$"] = "https://dl.dropboxusercontent.com/s/%s",
