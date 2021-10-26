@@ -901,6 +901,8 @@ if CLIENT then
             local perSeg = 15
             local scale = (ScrH() / 3) / 10
 
+            surface.SetDrawColor(0, 0, 0, 100)
+            surface.DrawRect(ScrW() - 18, ScrH() * 1 / 3 + 12, 18, ScrH() * 1 / 3 - 24)
             local curr_pitch = (LocalPlayer().wowozela_real_pitch or 0) * -1
             local offset = (curr_pitch % perSeg)
             local offsetScale = offset / perSeg
@@ -916,14 +918,14 @@ if CLIENT then
 
             surface.SetDrawColor(Color(0, 255, 55, 120))
             surface.DrawLine(ScrW() - 18, center_y, ScrW(), center_y)
-            draw.Text({
+            draw.TextShadow({
                 text = ("%0.01f"):format(curr_pitch),
                 color = Color(255, 255, 255, 255),
                 pos = {ScrW() - 19, center_y},
                 xalign = TEXT_ALIGN_RIGHT,
                 yalign = TEXT_ALIGN_CENTER,
                 font = "WowozelaNoteSmall"
-            })
+            }, 1)
         end
     end
 
