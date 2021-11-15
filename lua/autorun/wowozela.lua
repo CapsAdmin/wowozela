@@ -82,7 +82,7 @@ if CLIENT then
         end
 
         if not net.ReadBool() then
-            local updatedPly = 4500 + net.ReadUInt(6) * 15
+            local updatedPly = 4500 + net.ReadUInt(10) * 15
             for _, ply in ipairs(player.GetAll()) do
                 for i = updatedPly, updatedPly + 11 do
                     local v = wowozela.KnownSamples[i]
@@ -216,7 +216,7 @@ if SERVER then
         net.Start("wowozela_update_samples")
             net.WriteTable(newSamples)
             net.WriteBool(false)
-            net.WriteUInt(ply:EntIndex(), 6)
+            net.WriteUInt(ply:EntIndex(), 10)
         net.Broadcast()
     end)
 
