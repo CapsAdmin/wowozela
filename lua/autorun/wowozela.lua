@@ -201,16 +201,18 @@ if SERVER then
 
         local newSamples = {}
         for k,v in pairs(samples) do
-            local newSample = {
-                category = "custom-sample-hidden",
-                owner = ply:EntIndex(),
-                custom = true,
-                path = v[1],
-                name = v[2]
-            }
+            if k > 0 or k <= 10 then
+                local newSample = {
+                    category = "custom-sample-hidden",
+                    owner = ply:EntIndex(),
+                    custom = true,
+                    path = v[1],
+                    name = v[2]
+                }
 
-            wowozela.KnownSamples[startID + k] = newSample
-            newSamples[startID + k] = newSample
+                wowozela.KnownSamples[startID + k] = newSample
+                newSamples[startID + k] = newSample
+            end
         end
 
         net.Start("wowozela_update_samples")
