@@ -201,7 +201,7 @@ if SERVER then
 
         local newSamples = {}
         for k,v in pairs(samples) do
-            if k > 0 or k <= 10 then
+            if k > 0 and k <= 10 then
                 local newSample = {
                     category = "custom-sample-hidden",
                     owner = ply:EntIndex(),
