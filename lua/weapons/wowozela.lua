@@ -392,27 +392,19 @@ if CLIENT then
             self.CategoriesRev[v] = table.insert(self.Categories, v)
         end
 
-        for k, v in ipairs(wowozela.GetSamples()) do
-            if not self.CategoriesRev[v.category] then
-                self.CategoriesRev[v.category] = table.insert(self.Categories, v.category)
-            end
-        end
-
-        local defaultPage = wowozela.defaultpage and wowozela.defaultpage:GetString()
-        if defaultPage and defaultPage ~= "" then
-            self.CurrentPageIndex = self.CategoriesRev[string.lower(defaultPage)] or 1
-        end
-
         if self.CategoriesRev["custom"] then
             self.Pages[self.CategoriesRev["custom"]] = {{}, {}, {}, {}, {}, {}, {}, {}, {}, {}}
         end
 
         for k, v in ipairs(wowozela.GetSamples()) do
             local catIndex = self.CategoriesRev[v.category]
-            if catIndex then
-                if not self.Pages[catIndex] then self.Pages[catIndex] = {} end
-                table.insert(self.Pages[catIndex], v)
+            if not catIndex then
+                catIndex = table.insert(self.Categories, v.category)
+                self.CategoriesRev[v.category] = catIndex
             end
+
+            if not self.Pages[catIndex] then self.Pages[catIndex] = {} end
+            table.insert(self.Pages[catIndex], v)
         end
 
         if file.Exists("wowozela_custom_page.txt", "DATA") and self.CategoriesRev["custom"] then
@@ -426,6 +418,11 @@ if CLIENT then
             end
 
             self:LoadCustoms()
+        end
+
+        local defaultPage = wowozela.defaultpage and wowozela.defaultpage:GetString()
+        if defaultPage and defaultPage ~= "" then
+            self.CurrentPageIndex = self.CategoriesRev[string.lower(defaultPage)] or 1
         end
     end
 
