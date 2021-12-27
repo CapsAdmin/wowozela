@@ -382,57 +382,50 @@ if CLIENT then
         end
     end
     function SWEP:LoadPages()
-
         if not wowozela.GetSample(1) then
             return
         end
 
-        self.Categories = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
+        self.Categories, self.CategoriesRev, self.Pages = {}, {}, {}
+        local catsToAdd = {"solo", "guitar", "voices", "bass", "drums", "horn", "animals", "polyphonic", "custom"}
+        for _, v in ipairs(catsToAdd) do
+            self.CategoriesRev[v] = table.insert(self.Categories, v)
+        end
 
         for k, v in ipairs(wowozela.GetSamples()) do
-            if not table.HasValue(self.Categories, v.category) then
-                table.insert(self.Categories, v.category)
+            if not self.CategoriesRev[v.category] then
+                self.CategoriesRev[v.category] = table.insert(self.Categories, v.category)
             end
         end
 
         local defaultPage = wowozela.defaultpage and wowozela.defaultpage:GetString()
         if defaultPage and defaultPage ~= "" then
-            for i, v in ipairs(self.Categories) do
-                if defaultPage == v then
-                    self.CurrentPageIndex = i
-                end
+            self.CurrentPageIndex = self.CategoriesRev[string.lower(defaultPage)] or 1
+        end
+
+        if self.CategoriesRev["custom"] then
+            self.Pages[self.CategoriesRev["custom"]] = {{}, {}, {}, {}, {}, {}, {}, {}, {}, {}}
+        end
+
+        for k, v in ipairs(wowozela.GetSamples()) do
+            local catIndex = self.CategoriesRev[v.category]
+            if catIndex then
+                if not self.Pages[catIndex] then self.Pages[catIndex] = {} end
+                table.insert(self.Pages[catIndex], v)
             end
         end
 
-        self.Pages = {}
+        if file.Exists("wowozela_custom_page.txt", "DATA") and self.CategoriesRev["custom"] then
+            local customIndex = self.CategoriesRev["custom"]
+            self.Pages[customIndex] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
 
-        for i, category in ipairs(self.Categories) do
-            self.Pages[i] = {}
-            if category == "custom" then
-                for i2 = 1, 10 do self.Pages[i][i2] = {} end
-            end
-
-            for k, v in ipairs(wowozela.GetSamples()) do
-                if v.category == category then
-                    table.insert(self.Pages[i], v)
+            for i2 = 1, 10 do
+                if not self.Pages[customIndex][i2] then
+                    self.Pages[customIndex][i2] = {}
                 end
             end
-        end
 
-        if file.Exists("wowozela_custom_page.txt", "DATA") then
-            for i, v in ipairs(self.Categories) do
-                if v == "custom" then
-                    self.Pages[i] = util.JSONToTable(file.Read("wowozela_custom_page.txt", "DATA"))
-
-                    for i2 = 1, 10 do
-                        if not self.Pages[i][i2] then
-                            self.Pages[i][i2] = {}
-                        end
-                    end
-                    self:LoadCustoms()
-                    break
-                end
-            end
+            self:LoadCustoms()
         end
     end
 

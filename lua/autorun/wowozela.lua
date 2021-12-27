@@ -138,7 +138,7 @@ if CLIENT then
             return
         end
 
-        http.Fetch(url,function(data,len,hdr,code)
+        http.Fetch(url, function(data,len,hdr,code)
             if string.len(data) > FILE_LIMIT then
                 return fail(("Too big (>%s MB)."):format(FILE_LIMIT_MB))
             end
