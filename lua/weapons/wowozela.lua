@@ -427,6 +427,13 @@ if CLIENT then
     end
 
     concommand.Add("wowozela_reset_custom_page", function()
+        local wep = IsValid(LocalPlayer()) and LocalPlayer():GetWeapon("wowozela")
+        if IsValid(wep) then
+            local customIndex = wep.CategoriesRev["custom"]
+            if customIndex then
+                wep.Pages[customIndex] = {{}, {}, {}, {}, {}, {}, {}, {}, {}, {}}
+            end
+        end
         file.Delete("wowozela_custom_page.txt", "DATA")
     end)
 
