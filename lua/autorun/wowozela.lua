@@ -143,7 +143,7 @@ if CLIENT then
                 return fail(("Too big (>%s MB)."):format(FILE_LIMIT_MB))
             end
             if not isOGGorMP3(data) then
-                return fail("Not an ogg/mp3, or download failed.")
+                return fail("Downloaded file was not an ogg/mp3, not a direct link?")
             end
             file.Write(path, data)
             back("data/" .. path)
