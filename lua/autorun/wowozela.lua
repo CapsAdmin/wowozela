@@ -312,8 +312,6 @@ do -- sample meta
     local META = {}
     META.__index = META
 
-    META.Weapon = NULL
-
     function META:Initialize(ply)
         ply.wowozela_sampler = self
 
@@ -347,7 +345,6 @@ do -- sample meta
     function META:CanPlay()
         local wep = self.Player:GetActiveWeapon()
         if wep:IsWeapon() and wep:GetClass() == "wowozela" then
-            self.Weapon = wep
             return true
         end
 
@@ -601,7 +598,7 @@ do -- sample meta
                         stop_sound(csp, self)
                     end
                 end
-                self.WasPlaying = false
+                self.WasPlaying = nil
             end
             return
         end
@@ -742,6 +739,21 @@ do -- hooks
             return
         end
 
+        for k, sampler in next, wowozela.Samplers do
+            if not IsValid(sampler.Player) then
+                sampler:Destroy()
+                wowozela.Samplers[k] = nil
+            else
+                sampler:Think()
+            end
+        end
+    end
+
+    function wowozela.SlowThink()
+        if not wowozela.KnownSamples[1] then
+            return
+        end
+
         if CLIENT then
             local vol = wowozela.volume:GetFloat()
             wowozela.intvolume = math.Clamp(vol, 0, 1)
@@ -749,30 +761,15 @@ do -- hooks
         end
 
         for _, ply in ipairs(player.GetAll()) do
-            local sampler = wowozela.GetSampler(ply)
-
-            if not sampler then
-                sampler = wowozela.CreateSampler(ply)
-            end
-
-            if sampler and sampler.Think then
-                sampler:Think()
-            end
-        end
-
-        for k, sampler in next, wowozela.Samplers do
-            if not IsValid(sampler.Player) then
-                sampler:Destroy()
-                wowozela.Samplers[k] = nil
+            if not wowozela.GetSampler(ply) then
+                wowozela.CreateSampler(ply)
             end
         end
     end
-
     hook.Add("Think", "wowozela_think", wowozela.Think)
+    timer.Create("WowozelaSlowThink", 0.1, 0, wowozela.SlowThink)
 
-
-
-    function wowozela.Draw()
+    --[=[function wowozela.Draw()
         if not wowozela.KnownSamples[1] then
             return
         end
@@ -786,7 +783,7 @@ do -- hooks
         end
     end
 
-    hook.Add("PostDrawOpaqueRenderables", "wowozela_draw", wowozela.Draw)
+    hook.Add("PostDrawOpaqueRenderables", "wowozela_draw", wowozela.Draw)]=]
 
     function wowozela.BroadcastKeyEvent(ply, key, press, filter)
         net.Start("wowozela_key", true)
@@ -837,7 +834,6 @@ do -- hooks
     end)
 
     if CLIENT then
-
         net.Receive("wowozela_sample", function()
             local ply = net.ReadEntity()
             if not ply:IsValid() then

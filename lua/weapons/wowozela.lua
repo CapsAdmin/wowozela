@@ -120,15 +120,87 @@ if CLIENT then
     end)
 end
 
+
 local DisableUnlimitedPitch
 local EnableUnlimitedPitch
 
 if CLIENT then
-    function DisableUnlimitedPitch(ply)
+    local cx, cy = 0, 0
+    local upsidedown = false
+    local function HandleMouse(cmd, x, y, ang)
+        local ply = LocalPlayer()
+        local wep = ply:GetActiveWeapon()
+        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
+            DisableUnlimitedPitch(ply)
+            return
+        end
 
+
+        local m_pitch = GetConVar("m_pitch") and GetConVar("m_pitch"):GetFloat() or 0.022
+        local m_yaw = GetConVar("m_yaw") and GetConVar("m_yaw"):GetFloat() or 0.022
+
+        if upsidedown then
+            x = -x
+        end
+
+        cx = cx + x * m_yaw
+        cy = cy + y * m_pitch
+
+        local rcy = cy
+        if ply:KeyDown(IN_SPEED) then
+            rcy = rcy / 90 -- -1 to 1
+            rcy = (rcy + 1) / 2 -- 0 to 1
+            rcy = rcy * 12 -- 0 to 12
+            rcy = math.Round(rcy * 2) / 2 -- rounded
+            rcy = rcy / 12
+            rcy = (rcy * 2) - 1
+
+            rcy = rcy * 90
+        end
+
+
+        ang = Angle(rcy, -cx, ang.r)
+        ang.p = math.NormalizeAngle(ang.p)
+
+        local max = GetConVar("cl_pitchup") and GetConVar("cl_pitchup"):GetFloat() or 89
+        local min = GetConVar("cl_pitchdown") and GetConVar("cl_pitchdown"):GetFloat() or 89
+
+        if ang.p >= max then
+            upsidedown = true
+        elseif ang.p <= -min then
+            upsidedown = true
+        else
+            upsidedown = false
+        end
+
+        local pitch_offset = Angle(0,0,0)
+
+        if upsidedown then
+            ang.p = math.NormalizeAngle(ang.p + 180)
+            pitch_offset.p = -180
+            pitch_offset.y = 0
+        end
+
+        cmd:SetViewAngles(ang + pitch_offset)
+
+        if ply.wowozela_real_pitch ~= rcy then
+            net.Start("wowozela_pitch", true)
+            net.WriteFloat(rcy)
+            net.SendToServer()
+            --print("sending")
+            ply.wowozela_real_pitch = rcy
+        end
+
+        return true
+    end
+
+    function DisableUnlimitedPitch(ply)
         if ply.wowozela_head_cb then
             ply:RemoveCallback("BuildBonePositions", ply.wowozela_head_cb)
             ply.wowozela_head_cb = nil
+        end
+        if ply == LocalPlayer() then
+            hook.Remove("InputMouseApply", "wowozela_unlocked_pitch")
         end
     end
 
@@ -165,7 +237,9 @@ if CLIENT then
                 end
             end
         end)
-
+        if ply == LocalPlayer() then
+            hook.Add("InputMouseApply", "wowozela_unlocked_pitch", HandleMouse)
+        end
     end
 end
 
@@ -937,76 +1011,6 @@ if CLIENT then
         end
     end)
 
-    local cx, cy = 0, 0
-    local upsidedown = false
-
-    hook.Add("InputMouseApply", "wowozela_unlocked_pitch", function(cmd, x, y, ang)
-        local ply = LocalPlayer()
-        local wep = ply:GetActiveWeapon()
-        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
-            DisableUnlimitedPitch(ply)
-            return
-        end
-
-        EnableUnlimitedPitch(ply)
-
-        local m_pitch = GetConVar("m_pitch") and GetConVar("m_pitch"):GetFloat() or 0.022
-        local m_yaw = GetConVar("m_yaw") and GetConVar("m_yaw"):GetFloat() or 0.022
-
-        if upsidedown then
-            x = -x
-        end
-
-        cx = cx + x * m_yaw
-        cy = cy + y * m_pitch
-
-        local rcy = cy
-        if ply:KeyDown(IN_SPEED) then
-            rcy = rcy / 90 -- -1 to 1
-            rcy = (rcy + 1) / 2 -- 0 to 1
-            rcy = rcy * 12 -- 0 to 12
-            rcy = math.Round(rcy * 2) / 2 -- rounded
-            rcy = rcy / 12
-            rcy = (rcy * 2) - 1
-
-            rcy = rcy * 90
-        end
-
-
-        ang = Angle(rcy, -cx, ang.r)
-        ang.p = math.NormalizeAngle(ang.p)
-
-        local max = GetConVar("cl_pitchup") and GetConVar("cl_pitchup"):GetFloat() or 89
-        local min = GetConVar("cl_pitchdown") and GetConVar("cl_pitchdown"):GetFloat() or 89
-
-        if ang.p >= max then
-            upsidedown = true
-        elseif ang.p <= -min then
-            upsidedown = true
-        else
-            upsidedown = false
-        end
-
-        local pitch_offset = Angle(0,0,0)
-
-        if upsidedown then
-            ang.p = math.NormalizeAngle(ang.p + 180)
-            pitch_offset.p = -180
-            pitch_offset.y = 0
-        end
-
-        cmd:SetViewAngles(ang + pitch_offset)
-
-        if ply.wowozela_real_pitch ~= rcy then
-            net.Start("wowozela_pitch", true)
-            net.WriteFloat(rcy)
-            net.SendToServer()
-            --print("sending")
-            ply.wowozela_real_pitch = rcy
-        end
-
-        return true
-    end)
     local function getFileName(inputURL)
         local parts = string.Split(inputURL, "/")
         local filename = string.Split(parts[#parts], ".")[1]
