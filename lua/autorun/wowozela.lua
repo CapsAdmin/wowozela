@@ -656,7 +656,7 @@ do -- sample meta
 
     local partDist = 2048 * 2048
     function META:MakeParticle()
-        if CLIENT and LocalPlayer():GetPos():DistToSqr(self:GetPos()) > partDist then
+        if CLIENT and LocalPlayer() ~= self.Player and LocalPlayer():GetPos():DistToSqr(self:GetPos()) > partDist then
             return
         end
 
@@ -725,7 +725,7 @@ do -- sample meta
         sampler:Initialize(ply)
         ply.wowozela_sampler = sampler
 
-        wowozela.Samplers[ply:UserID()] = sampler
+        wowozela.Samplers[ply:AccountID()] = sampler
         return sampler
     end
 
@@ -737,7 +737,7 @@ end
 do -- hooks
     function wowozela.KeyEvent(ply, key, press)
         local sampler = wowozela.GetSampler(ply)
-        if sampler and sampler.OnKeyEvent and ply == sampler.Player then
+        if sampler then
             sampler.Keys[key] = press
             return sampler:OnKeyEvent(key, press)
         end
