@@ -96,6 +96,7 @@ if CLIENT then
         wowozela.SetSampleIndexRight(1)
 
         for _, ply in ipairs(player.GetAll()) do
+            if ply:IsBot() then continue end
             local sampler = wowozela.GetSampler(ply)
             if sampler then
                 for _,v in pairs(sampler.Samples or {}) do
@@ -721,6 +722,8 @@ do -- sample meta
     wowozela.SamplerMeta = META
 
     function wowozela.CreateSampler(ply)
+        if ply:IsBot() then return end -- bots are not permitted to play the wowozela
+
         local sampler = setmetatable({}, wowozela.SamplerMeta)
         sampler:Initialize(ply)
         ply.wowozela_sampler = sampler
@@ -763,7 +766,7 @@ do -- hooks
         end
 
         for _, ply in ipairs(player.GetAll()) do
-            if not wowozela.GetSampler(ply) then
+            if not ply:IsBot() and not wowozela.GetSampler(ply) then
                 wowozela.CreateSampler(ply)
             end
         end
