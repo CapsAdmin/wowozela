@@ -336,15 +336,17 @@ do -- sample meta
         if button then
             local wep = self.Player:GetActiveWeapon()
             local get = "GetNoteIndex" .. button
-            if wep:IsWeapon() and wep:GetClass() == "wowozela" and wep[get] then
+            if IsValid(wep) and wep:GetClass() == "wowozela" and wep[get] then
                 return wep[get](wep)
             end
         end
     end
 
     function META:CanPlay()
+        if not IsValid(self.Player) then return false end
+
         local wep = self.Player:GetActiveWeapon()
-        if wep:IsWeapon() and wep:GetClass() == "wowozela" then
+        if IsValid(wep) and wep:GetClass() == "wowozela" then
             return true
         end
 
@@ -590,16 +592,18 @@ do -- sample meta
         return -pitch / 89
     end
 
+    function META:StopPlaying()
+        if not self.WasPlaying then return end
+        for _, csp in pairs(self.Samples) do
+            if not csp.paused then
+                stop_sound(csp, self)
+            end
+        end
+        self.WasPlaying = nil
+    end
+
     function META:Think()
         if not self:CanPlay() or wowozela.disabled then
-            if self.WasPlaying then
-                for _, csp in pairs(self.Samples) do
-                    if not csp.paused then
-                        stop_sound(csp, self)
-                    end
-                end
-                self.WasPlaying = nil
-            end
             return
         end
 
@@ -735,15 +739,8 @@ do -- hooks
     end
 
     function wowozela.Think()
-        if not wowozela.KnownSamples[1] then
-            return
-        end
-
         for k, sampler in next, wowozela.Samplers do
-            if not IsValid(sampler.Player) then
-                sampler:Destroy()
-                wowozela.Samplers[k] = nil
-            else
+            if sampler:CanPlay() then
                 sampler:Think()
             end
         end
@@ -765,9 +762,18 @@ do -- hooks
                 wowozela.CreateSampler(ply)
             end
         end
+
+        for k, sampler in next, wowozela.Samplers do
+            if not IsValid(sampler.Player) then
+                sampler:Destroy()
+                wowozela.Samplers[k] = nil
+            elseif not sampler:CanPlay() then
+                sampler:StopPlaying()
+            end
+        end
     end
     hook.Add("Think", "wowozela_think", wowozela.Think)
-    timer.Create("WowozelaSlowThink", 0.1, 0, wowozela.SlowThink)
+    timer.Create("WowozelaSlowThink", 0.2, 0, wowozela.SlowThink)
 
     --[=[function wowozela.Draw()
         if not wowozela.KnownSamples[1] then

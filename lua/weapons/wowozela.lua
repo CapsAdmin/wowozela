@@ -242,6 +242,12 @@ if CLIENT then
         end
     end
 end
+function SWEP:_Think()
+    if self:GetOwner() and self:GetOwner():IsValid() and self:GetOwner():GetViewModel():IsValid() then
+        self:GetOwner():GetViewModel():SetNoDraw(true)
+        self.Think = nil
+    end
+end
 
 function SWEP:Deploy()
     self.Think = self._Think
@@ -253,16 +259,13 @@ function SWEP:Deploy()
 end
 
 function SWEP:Holster()
-    if CLIENT then
+    if not self:GetOwner():KeyDown(IN_RELOAD) then
         local ply = self:GetOwner()
-
-        if ply.wowozela_head_cb then
+        if CLIENT and ply.wowozela_head_cb then
             ply:RemoveCallback("BuildBonePositions", ply.wowozela_head_cb)
             ply.wowozela_head_cb = nil
         end
-    end
 
-    if not self:GetOwner():KeyDown(IN_RELOAD) then
         return true
     end
     return false
@@ -283,12 +286,7 @@ function SWEP:OnKeyEvent(key, press)
     end
 end
 
-function SWEP:_Think()
-    if self:GetOwner() and self:GetOwner():IsValid() and self:GetOwner():GetViewModel():IsValid() then
-        self:GetOwner():GetViewModel():SetNoDraw(true)
-        self.Think = nil
-    end
-end
+
 
 function SWEP:GetViewModelPosition(pos, ang)
     pos.x = 35575
