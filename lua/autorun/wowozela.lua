@@ -621,10 +621,11 @@ do -- sample meta
         end
 
         self.WasPlaying = true
-        local wep = self.Player:GetActiveWeapon()
-
-        local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
-        self:SetLooping(looping)
+        if CLIENT then
+            local wep = self.Player:GetActiveWeapon()
+            local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
+            self:SetLooping(looping)
+        end
 
         self:SetPitch(self:GetPlayerPitch())
 
