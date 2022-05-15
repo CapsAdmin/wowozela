@@ -727,7 +727,7 @@ do -- sample meta
         sampler:Initialize(ply)
         ply.wowozela_sampler = sampler
 
-        wowozela.Samplers[ply:AccountID()] = sampler
+        wowozela.Samplers[ply:AccountID() or ply:UserID()] = sampler
         return sampler
     end
 
