@@ -400,9 +400,8 @@ do -- sample meta
                                 if not snd or err then return end
                                 processing = false
                                 self.paused = true
-                                self.looping = true
                                 self.obj = snd
-                                snd:EnableLooping(true)
+                                snd:EnableLooping(sampler.Looping)
                                 snd:SetVolume(wowozela.intvolume or 1)
                                 snd:SetPlaybackRate((sampler.Pitch or 100) / 100)
                                 snd:Set3DEnabled(sampler.Player ~= LocalPlayer())
@@ -471,6 +470,20 @@ do -- sample meta
         if lastPitch ~= self.Pitch then
             for _, sample in pairs(self.Samples) do
                 set_pitch(sample, self.Pitch, self)
+            end
+        end
+    end
+
+    function META:SetLooping(loop)
+        local lastVal = self.Looping
+
+        if lastVal ~= loop then
+            self.Looping = loop
+            for k,v in pairs(self.Samples) do
+                if IsValid(v.obj) then
+                    v.obj:EnableLooping(loop)
+                    v.obj:SetTime(0)
+                end
             end
         end
     end
@@ -609,23 +622,9 @@ do -- sample meta
 
         self.WasPlaying = true
         local wep = self.Player:GetActiveWeapon()
-        if wep.GetLooping and not wep:GetLooping() then
-            for k,v in pairs(self.Samples) do
-                if IsValid(v.obj) and v.looping then
-                    v.obj:EnableLooping(false)
-                    v.obj:SetTime(0)
-                    v.looping = false
-                end
-            end
-        else
-            for k,v in pairs(self.Samples) do
-                if IsValid(v.obj) and not v.looping then
-                    v.obj:EnableLooping(true)
-                    v.obj:SetTime(0)
-                    v.looping = true
-                end
-            end
-        end
+
+        local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
+        self:SetLooping(looping)
 
         self:SetPitch(self:GetPlayerPitch())
 
