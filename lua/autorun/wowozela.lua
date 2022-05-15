@@ -83,7 +83,7 @@ if CLIENT then
 
         if not net.ReadBool() then
             local updatedPly = 4500 + net.ReadUInt(10) * 15
-            for _, ply in ipairs(player.GetAll()) do
+            for _, ply in ipairs(player.GetHumans()) do
                 for i = updatedPly, updatedPly + 11 do
                     local v = wowozela.KnownSamples[i]
                     update_sample(ply, i, v)
@@ -95,8 +95,7 @@ if CLIENT then
         wowozela.SetSampleIndexLeft(1)
         wowozela.SetSampleIndexRight(1)
 
-        for _, ply in ipairs(player.GetAll()) do
-            if ply:IsBot() then continue end
+        for _, ply in ipairs(player.GetHumans()) do
             local sampler = wowozela.GetSampler(ply)
             if sampler then
                 for _,v in pairs(sampler.Samples or {}) do
@@ -495,7 +494,7 @@ do -- sample meta
         wowozela.intvolume = math.Clamp(vol, 0, 1)
         wowozela.disabled = vol < 0.01
 
-        for _, ply in ipairs(player.GetAll()) do
+        for _, ply in ipairs(player.GetHumans()) do
             local sampler = wowozela.GetSampler(ply)
 
             if sampler and sampler.Samples then
@@ -765,8 +764,8 @@ do -- hooks
             wowozela.disabled = vol < 0.01
         end
 
-        for _, ply in ipairs(player.GetAll()) do
-            if not ply:IsBot() and not ply.wowozela_sampler then
+        for _, ply in ipairs(player.GetHumans()) do
+            if not ply.wowozela_sampler then
                 wowozela.CreateSampler(ply)
             end
         end
@@ -788,7 +787,7 @@ do -- hooks
             return
         end
 
-        for key, ply in pairs(player.GetAll()) do
+        for key, ply in ipairs(player.GetHumans()) do
             local sampler = wowozela.GetSampler(ply)
 
             if sampler and sampler.Draw then
@@ -879,14 +878,14 @@ do -- hooks
 end
 
 if CLIENT then
-    for _, ply in ipairs(player.GetAll()) do
+    for _, ply in ipairs(player.GetHumans()) do
         wowozela.CreateSampler(ply)
     end
 end
 
 if SERVER then
     timer.Simple(0.1, function()
-        for _, ply in ipairs(player.GetAll()) do
+        for _, ply in ipairs(player.GetHumans()) do
             wowozela.BroacastSamples(ply)
         end
     end)
