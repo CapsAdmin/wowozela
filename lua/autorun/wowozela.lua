@@ -766,7 +766,7 @@ do -- hooks
         end
 
         for _, ply in ipairs(player.GetAll()) do
-            if not ply:IsBot() and not wowozela.GetSampler(ply) then
+            if not ply:IsBot() and not ply.wowozela_sampler then
                 wowozela.CreateSampler(ply)
             end
         end
@@ -781,7 +781,7 @@ do -- hooks
         end
     end
     hook.Add("Think", "wowozela_think", wowozela.Think)
-    timer.Create("WowozelaSlowThink", 0.2, 0, wowozela.SlowThink)
+    timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
 
     --[=[function wowozela.Draw()
         if not wowozela.KnownSamples[1] then
