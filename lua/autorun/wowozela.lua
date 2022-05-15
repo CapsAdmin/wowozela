@@ -654,7 +654,12 @@ do -- sample meta
         self.Samples = {}
     end
 
+    local partDist = 2048 * 2048
     function META:MakeParticle()
+        if CLIENT and LocalPlayer():GetPos():DistToSqr(self:GetPos()) > partDist then
+            return
+        end
+
         local pitch = self.Pitch
 
         emitter = emitter or ParticleEmitter(Vector())
