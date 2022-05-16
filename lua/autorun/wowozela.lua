@@ -26,7 +26,7 @@ end
 
 
 if CLIENT then
-    wowozela.Samplers = wowozela.Samplers or {}
+    wowozela.Samplers = {}
     wowozela.volume = CreateClientConVar("wowozela_volume", "0.5", true, false)
     wowozela.hudtext = CreateClientConVar("wowozela_hudtext", "1", true, false)
     wowozela.pitchbar = CreateClientConVar("wowozela_pitchbar", "1", true, false)
@@ -314,8 +314,6 @@ if CLIENT then -- sample meta
     META.__index = META
 
     function META:Initialize(ply)
-        ply.wowozela_sampler = self
-
         self.Player = NULL
 
         self.Pitch = 100
@@ -723,14 +721,13 @@ if CLIENT then -- sample meta
 
         local sampler = setmetatable({}, wowozela.SamplerMeta)
         sampler:Initialize(ply)
-        ply.wowozela_sampler = sampler
 
-        wowozela.Samplers[ply:AccountID() or ply:UserID()] = sampler
+        wowozela.Samplers[ply:UserID()] = sampler
         return sampler
     end
 
     function wowozela.GetSampler(ply)
-        return ply.wowozela_sampler
+        return wowozela.Samplers[ply:UserID()]
     end
 end
 
@@ -798,7 +795,7 @@ do -- hooks
             wowozela.disabled = vol < 0.01
 
             for _, ply in ipairs(player.GetHumans()) do
-                if not ply.wowozela_sampler then
+                if not wowozela.Samplers[ply:UserID()] then
                     wowozela.CreateSampler(ply)
                 end
             end

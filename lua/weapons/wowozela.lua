@@ -988,7 +988,7 @@ if CLIENT then
             surface.SetDrawColor(Color(0, 255, 55, 120))
             surface.DrawLine(ScrW() - 18, center_y, ScrW(), center_y)
             draw.TextShadow({
-                text = ("%0.01f"):format(curr_pitch),
+                text = ("%0.1f"):format(curr_pitch),
                 color = Color(255, 255, 255, 255),
                 pos = {ScrW() - 19, center_y},
                 xalign = TEXT_ALIGN_RIGHT,
