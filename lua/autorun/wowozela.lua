@@ -13,7 +13,7 @@ wowozela.ValidNotes = {
 wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
 
 wowozela.KnownSamples = wowozela.KnownSamples or {}
-wowozela.Samplers = wowozela.Samplers or {}
+
 
 function wowozela.GetSamples()
     return wowozela.KnownSamples
@@ -26,6 +26,7 @@ end
 
 
 if CLIENT then
+    wowozela.Samplers = wowozela.Samplers or {}
     wowozela.volume = CreateClientConVar("wowozela_volume", "0.5", true, false)
     wowozela.hudtext = CreateClientConVar("wowozela_hudtext", "1", true, false)
     wowozela.pitchbar = CreateClientConVar("wowozela_pitchbar", "1", true, false)
@@ -308,7 +309,7 @@ function wowozela.KeyToButton(key)
 end
 
 
-do -- sample meta
+if CLIENT then -- sample meta
     local META = {}
     META.__index = META
 
@@ -643,6 +644,7 @@ do -- sample meta
     end
 
     function META:Destroy()
+        if SERVER then return end
         for _,v in pairs(self.Samples) do
             if v.obj then
                 v.obj:Stop()
@@ -757,11 +759,9 @@ do -- hooks
             return
         end
 
-        if CLIENT then
-            local vol = wowozela.volume:GetFloat()
-            wowozela.intvolume = math.Clamp(vol, 0, 1)
-            wowozela.disabled = vol < 0.01
-        end
+        local vol = wowozela.volume:GetFloat()
+        wowozela.intvolume = math.Clamp(vol, 0, 1)
+        wowozela.disabled = vol < 0.01
 
         for _, ply in ipairs(player.GetHumans()) do
             if not ply.wowozela_sampler then
@@ -778,8 +778,11 @@ do -- hooks
             end
         end
     end
-    if CLIENT then hook.Add("Think", "wowozela_think", wowozela.Think) end
-    timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
+
+    if CLIENT then
+        hook.Add("Think", "wowozela_think", wowozela.Think)
+        timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
+    end
 
     --[=[function wowozela.Draw()
         if not wowozela.KnownSamples[1] then
