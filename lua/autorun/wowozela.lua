@@ -385,7 +385,6 @@ if CLIENT then -- sample meta
     end
 
     local function create_sound(path, isHttp, sampler)
-        if SERVER then return end
         local processing = false
         local _smeta = {
             __index = function(self, index)
@@ -501,7 +500,6 @@ if CLIENT then -- sample meta
     end
 
     cvars.AddChangeCallback("wowozela_volume", function(cvar, oldval, newval)
-        if SERVER then return end
         if oldval == newval then return end
 
         local vol = tonumber(newval) or 0.5
@@ -644,7 +642,6 @@ if CLIENT then -- sample meta
     end
 
     function META:Destroy()
-        if SERVER then return end
         for _,v in pairs(self.Samples) do
             if v.obj then
                 v.obj:Stop()
@@ -657,7 +654,7 @@ if CLIENT then -- sample meta
 
     local partDist = 2048 * 2048
     function META:MakeParticle()
-        if CLIENT and LocalPlayer() ~= self.Player and LocalPlayer():GetPos():DistToSqr(self:GetPos()) > partDist then
+        if LocalPlayer() ~= self.Player and LocalPlayer():GetPos():DistToSqr(self:GetPos()) > partDist then
             return
         end
 
@@ -738,80 +735,6 @@ if CLIENT then -- sample meta
 end
 
 do -- hooks
-    function wowozela.KeyEvent(ply, key, press)
-        local sampler = wowozela.GetSampler(ply)
-        if sampler then
-            sampler.Keys[key] = press
-            return sampler:OnKeyEvent(key, press)
-        end
-    end
-
-    function wowozela.Think()
-        for k, sampler in next, wowozela.Samplers do
-            if sampler:CanPlay() then
-                sampler:Think()
-            end
-        end
-    end
-
-    function wowozela.SlowThink()
-        if not wowozela.KnownSamples[1] then
-            return
-        end
-
-        local vol = wowozela.volume:GetFloat()
-        wowozela.intvolume = math.Clamp(vol, 0, 1)
-        wowozela.disabled = vol < 0.01
-
-        for _, ply in ipairs(player.GetHumans()) do
-            if not ply.wowozela_sampler then
-                wowozela.CreateSampler(ply)
-            end
-        end
-
-        for k, sampler in next, wowozela.Samplers do
-            if not IsValid(sampler.Player) then
-                sampler:Destroy()
-                wowozela.Samplers[k] = nil
-            elseif not sampler:CanPlay() and CLIENT then
-                sampler:StopPlaying()
-            end
-        end
-    end
-
-    if CLIENT then
-        hook.Add("Think", "wowozela_think", wowozela.Think)
-        timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
-    end
-
-    --[=[function wowozela.Draw()
-        if not wowozela.KnownSamples[1] then
-            return
-        end
-
-        for key, ply in ipairs(player.GetHumans()) do
-            local sampler = wowozela.GetSampler(ply)
-
-            if sampler and sampler.Draw then
-                sampler:Draw()
-            end
-        end
-    end
-
-    hook.Add("PostDrawOpaqueRenderables", "wowozela_draw", wowozela.Draw)]=]
-
-    function wowozela.BroadcastKeyEvent(ply, key, press, filter)
-        net.Start("wowozela_key", true)
-        net.WriteEntity(ply)
-        net.WriteInt(key, 32)
-        net.WriteBool(press)
-        if not filter then
-            net.SendOmit(ply)
-        else
-            net.Broadcast()
-        end
-    end
-
     hook.Add("KeyPress", "wowozela_keypress", function(ply, key)
         if not IsFirstTimePredicted() and not game.SinglePlayer() then
             return
@@ -849,6 +772,50 @@ do -- hooks
     end)
 
     if CLIENT then
+        function wowozela.KeyEvent(ply, key, press)
+            local sampler = wowozela.GetSampler(ply)
+            if sampler then
+                sampler.Keys[key] = press
+                return sampler:OnKeyEvent(key, press)
+            end
+        end
+
+        function wowozela.Think()
+            for k, sampler in next, wowozela.Samplers do
+                if sampler:CanPlay() then
+                    sampler:Think()
+                end
+            end
+        end
+
+        function wowozela.SlowThink()
+            if not wowozela.KnownSamples[1] then
+                return
+            end
+
+            local vol = wowozela.volume:GetFloat()
+            wowozela.intvolume = math.Clamp(vol, 0, 1)
+            wowozela.disabled = vol < 0.01
+
+            for _, ply in ipairs(player.GetHumans()) do
+                if not ply.wowozela_sampler then
+                    wowozela.CreateSampler(ply)
+                end
+            end
+
+            for k, sampler in next, wowozela.Samplers do
+                if not IsValid(sampler.Player) then
+                    sampler:Destroy()
+                    wowozela.Samplers[k] = nil
+                elseif not sampler:CanPlay() then
+                    sampler:StopPlaying()
+                end
+            end
+        end
+
+        hook.Add("Think", "wowozela_think", wowozela.Think)
+        timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
+
         net.Receive("wowozela_sample", function()
             local ply = net.ReadEntity()
             if not ply:IsValid() then
@@ -876,6 +843,18 @@ do -- hooks
 
             wowozela.KeyEvent(ply, key, press)
         end)
+    else
+        function wowozela.BroadcastKeyEvent(ply, key, press, filter)
+            net.Start("wowozela_key", true)
+            net.WriteEntity(ply)
+            net.WriteInt(key, 32)
+            net.WriteBool(press)
+            if not filter then
+                net.SendOmit(ply)
+            else
+                net.Broadcast()
+            end
+        end
     end
 end
 
