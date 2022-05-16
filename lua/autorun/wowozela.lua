@@ -532,7 +532,7 @@ if CLIENT then -- sample meta
 
 
             sample.create(function()
-                if self.KeyToSample[key] == sample then
+                if self.KeyToSample[key] == sample and IsValid(self.Player) then
                     play_sound(sample, self)
                 end
             end)
@@ -812,7 +812,7 @@ do -- hooks
 
         net.Receive("wowozela_sample", function()
             local ply = net.ReadEntity()
-            if not ply:IsValid() then
+            if not IsValid(ply) then
                 return
             end
             local sampler = wowozela.GetSampler(ply)
