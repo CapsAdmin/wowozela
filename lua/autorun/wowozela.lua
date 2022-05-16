@@ -364,9 +364,6 @@ if CLIENT then -- sample meta
 
     function META:GetAngles()
         local ang = self.Player:GetAimVector():Angle()
-
-        ang.p = math.NormalizeAngle(ang.p)
-        ang.y = math.NormalizeAngle(ang.y)
         ang.r = 0
 
         return ang

@@ -129,12 +129,6 @@ if CLIENT then
     local upsidedown = false
     local function HandleMouse(cmd, x, y, ang)
         local ply = LocalPlayer()
-        local wep = ply:GetActiveWeapon()
-        if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
-            DisableUnlimitedPitch(ply)
-            return
-        end
-
 
         local m_pitch = GetConVar("m_pitch") and GetConVar("m_pitch"):GetFloat() or 0.022
         local m_yaw = GetConVar("m_yaw") and GetConVar("m_yaw"):GetFloat() or 0.022
@@ -998,10 +992,10 @@ if CLIENT then
         end
     end
 
-    timer.Create("wowozela_head_turn", 0.1, 0, function()
-        for _, ply in ipairs(player.GetAll()) do
+    timer.Create("wowozela_head_turn", 0.2, 0, function()
+        for _, ply in ipairs(player.GetHumans()) do
             local wep = ply:GetActiveWeapon()
-            if not wep:IsValid() or wep:GetClass() ~= "wowozela" then
+            if not IsValid(wep) or wep:GetClass() ~= "wowozela" then
                 DisableUnlimitedPitch(ply)
             else
                 EnableUnlimitedPitch(ply)
