@@ -621,12 +621,11 @@ do -- sample meta
         end
 
         self.WasPlaying = true
-        if CLIENT then
-            local wep = self.Player:GetActiveWeapon()
-            local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
-            self:SetLooping(looping)
-        end
 
+        local wep = self.Player:GetActiveWeapon()
+        local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
+
+        self:SetLooping(looping)
         self:SetPitch(self:GetPlayerPitch())
 
         if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
@@ -774,12 +773,12 @@ do -- hooks
             if not IsValid(sampler.Player) then
                 sampler:Destroy()
                 wowozela.Samplers[k] = nil
-            elseif not sampler:CanPlay() then
+            elseif not sampler:CanPlay() and CLIENT then
                 sampler:StopPlaying()
             end
         end
     end
-    hook.Add("Think", "wowozela_think", wowozela.Think)
+    if CLIENT then hook.Add("Think", "wowozela_think", wowozela.Think) end
     timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
 
     --[=[function wowozela.Draw()
