@@ -10,6 +10,8 @@ wowozela.ValidNotes = {
     ["Right"] = IN_ATTACK2
 }
 
+
+
 wowozela.ValidKeys = {IN_ATTACK, IN_ATTACK2, IN_WALK, IN_SPEED, IN_USE}
 
 wowozela.KnownSamples = wowozela.KnownSamples or {}
@@ -40,78 +42,28 @@ if CLIENT then
             return
         end
 
-        net.Start("wowozela_select_" .. which)
-        net.WriteInt(note_index, 32)
+        net.Start("wowozela")
+            net.WriteInt(wowozela.NET.wowozela_select, 4)
+            net.WriteInt(which, 32)
+            net.WriteInt(note_index, 32)
         net.SendToServer()
-
-        if not wowozela.KnownSamples[note_index] then
-            print("wowozela " .. which .. ": note index " .. note_index .. " is out of range")
-        end
     end
 
     function wowozela.SetSampleIndexLeft(noteIndex)
-        return set_sample_index("left", noteIndex)
+        return set_sample_index(IN_ATTACK, noteIndex)
     end
 
     function wowozela.SetSampleIndexRight(noteIndex)
-        return set_sample_index("right", noteIndex)
+        return set_sample_index(IN_ATTACK2, noteIndex)
     end
 
 
     function wowozela.RequestCustomSamplesIndexes(samples)
-        net.Start("wowozela_customsample")
+        net.Start("wowozela")
+            net.WriteInt(wowozela.NET.wowozela_customsample, 4)
             net.WriteTable(samples)
         net.SendToServer()
     end
-
-    local function update_sample(ply, i, v)
-        local sampler = wowozela.GetSampler(ply)
-        if not sampler then return end
-        if v then
-            sampler:SetSample(i, v.custom, v.path)
-        elseif sampler.Samples and sampler.Samples[i] then
-            if IsValid(sampler.Samples[i].obj) then
-                sampler.Samples[i].obj:Stop()
-            end
-            sampler.Samples[i] = nil
-        end
-    end
-
-    net.Receive("wowozela_update_samples", function()
-        for i, v in pairs(net.ReadTable()) do
-            wowozela.KnownSamples[i] = v
-        end
-
-        if not net.ReadBool() then
-            local updatedPly = 4500 + net.ReadUInt(10) * 15
-            for _, ply in ipairs(player.GetHumans()) do
-                for i = updatedPly, updatedPly + 11 do
-                    local v = wowozela.KnownSamples[i]
-                    update_sample(ply, i, v)
-                end
-            end
-            return
-        end
-
-        wowozela.SetSampleIndexLeft(1)
-        wowozela.SetSampleIndexRight(1)
-
-        for _, ply in ipairs(player.GetHumans()) do
-            local sampler = wowozela.GetSampler(ply)
-            if sampler then
-                for _,v in pairs(sampler.Samples or {}) do
-                    if v.obj then
-                        v.obj:Stop()
-                    end
-                end
-                wowozela.CreateSampler(ply)
-            end
-            local wep = ply:GetActiveWeapon()
-            if wep:IsValid() and wep:GetClass() == "wowozela" then
-                wep:LoadPages()
-            end
-        end
-    end)
 
     local FOLDER = "wowozela_cache"
     file.CreateDir(FOLDER, "DATA")
@@ -189,63 +141,8 @@ if CLIENT then
     end
 end
 
+
 if SERVER then
-    wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_NOTIFY})
-    net.Receive("wowozela_customsample", function(_, ply)
-        if not wowozela.allowcustomsamples:GetBool() then return end
-
-        local samples = net.ReadTable()
-        local startID = 4500 + ply:EntIndex() * 15
-        for I = startID, startID + 11 do
-            wowozela.KnownSamples[I] = nil
-        end
-
-        local newSamples = {}
-        for k,v in pairs(samples) do
-            if k > 0 and k <= 10 then
-                local newSample = {
-                    category = "custom-sample-hidden",
-                    owner = ply:EntIndex(),
-                    custom = true,
-                    path = v[1],
-                    name = v[2]
-                }
-
-                wowozela.KnownSamples[startID + k] = newSample
-                newSamples[startID + k] = newSample
-            end
-        end
-
-        net.Start("wowozela_update_samples")
-            net.WriteTable(newSamples)
-            net.WriteBool(false)
-            net.WriteUInt(ply:EntIndex(), 10)
-        net.Broadcast()
-    end)
-
-
-
-    for key, in_enum in pairs(wowozela.ValidNotes) do
-        util.AddNetworkString("wowozela_select_" .. key)
-
-        net.Receive("wowozela_select_" .. key:lower(), function(len, ply)
-            local wep = ply:GetActiveWeapon()
-            if wep:IsValid() and wep:GetClass() == "wowozela" then
-                local value = net.ReadInt(32)
-                local function_name = "SetNoteIndex" .. key
-
-                if wep[function_name] then
-                    wep[function_name](wep, value)
-                    net.Start("wowozela_sample")
-                    net.WriteEntity(ply)
-                    net.WriteInt(in_enum, 32)
-                    net.WriteInt(value, 32)
-                    net.Broadcast()
-                end
-            end
-        end)
-    end
-
     function wowozela.LoadSamples()
         wowozela.KnownSamples = {}
 
@@ -267,20 +164,18 @@ if SERVER then
             return a.path < b.path
         end)
     end
-
     wowozela.LoadSamples()
 
-    util.AddNetworkString("wowozela_customsample")
-    util.AddNetworkString("wowozela_update_samples")
-    util.AddNetworkString("wowozela_key")
-    util.AddNetworkString("wowozela_sample")
+    util.AddNetworkString("wowozela")
 
     resource.AddWorkshop("108170491")
 
     function wowozela.BroacastSamples(ply)
-        net.Start("wowozela_update_samples")
-        net.WriteTable(wowozela.KnownSamples)
-        net.WriteBool(true)
+        net.Start("wowozela")
+            net.WriteInt(wowozela.NET.wowozela_update_samples, 4)
+            net.WriteTable(wowozela.KnownSamples)
+            net.WriteBool(true)
+            net.WriteInt(0, 10)
         net.Send(ply)
     end
 
@@ -293,6 +188,7 @@ if SERVER then
             end
         end)
     end)
+
 end
 
 function wowozela.IsValidKey(key)
@@ -306,6 +202,172 @@ function wowozela.KeyToButton(key)
         end
     end
     return false
+end
+
+-- Do Networking
+wowozela.NET = {
+    ["wowozela_pitch"] = 0,
+    ["wowozela_key"] = 1,
+    ["wowozela_select"] = 2,
+    ["wowozela_customsample"] = 3,
+    ["wowozela_update_samples"] = 4,
+    ["wowozela_sample"] = 5,
+    ["wowozela_togglelooping"] = 6,
+}
+wowozela.allowcustomsamples = CreateConVar("wowozela_customsamples", "1", {FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_NOTIFY})
+
+local keys = {
+    [IN_ATTACK] = "Left",
+    [IN_ATTACK2] = "Right"
+}
+
+if SERVER then
+    local netFuncs = {
+        [wowozela.NET.wowozela_pitch] = function(len, ply)
+            local pitch = net.ReadFloat()
+            ply.net_incoming_rate_count = nil
+            ply.wowozela_real_pitch = pitch
+
+            net.Start("wowozela", true)
+                net.WriteInt(wowozela.NET.wowozela_pitch, 4)
+                net.WriteEntity(ply)
+                net.WriteFloat(pitch)
+            net.SendOmit(ply)
+        end,
+        [wowozela.NET.wowozela_select] = function(len, ply)
+            local key, value = net.ReadInt(32), net.ReadInt(32)
+            local wep = ply:GetActiveWeapon()
+            if wep:IsValid() and wep:GetClass() == "wowozela" then
+                local function_name = "SetNoteIndex" .. keys[key]
+
+                if wep[function_name] then
+                    wep[function_name](wep, value)
+                    net.Start("wowozela")
+                        net.WriteInt(wowozela.NET.wowozela_sample, 4)
+                        net.WriteEntity(ply)
+                        net.WriteInt(key, 32)
+                        net.WriteInt(value, 32)
+                    net.Broadcast()
+                end
+            end
+        end,
+        [wowozela.NET.wowozela_customsample] = function(len, ply)
+            local samples = net.ReadTable()
+            local startID = 4500 + ply:EntIndex() * 15
+            for I = startID, startID + 11 do
+                wowozela.KnownSamples[I] = nil
+            end
+
+            if not wowozela.allowcustomsamples:GetBool() then return end
+
+            local newSamples = {}
+            for k,v in pairs(samples) do
+                if k > 0 and k <= 10 then
+                    local newSample = {
+                        category = "custom-sample-hidden",
+                        owner = ply:EntIndex(),
+                        custom = true,
+                        path = v[1],
+                        name = v[2]
+                    }
+
+                    wowozela.KnownSamples[startID + k] = newSample
+                    newSamples[startID + k] = newSample
+                end
+            end
+
+            net.Start("wowozela")
+                net.WriteInt(wowozela.NET.wowozela_update_samples, 4)
+                net.WriteTable(newSamples)
+                net.WriteBool(false)
+                net.WriteUInt(ply:EntIndex(), 10)
+            net.Broadcast()
+        end,
+        [wowozela.NET.wowozela_togglelooping] = function(len, ply)
+            local wep = ply:GetActiveWeapon()
+            if wep:IsValid() and wep:GetClass() == "wowozela" then
+                wep:SetLooping(not wep:GetLooping())
+            end
+        end
+    }
+    net.Receive("wowozela", function(len, ply)
+        netFuncs[net.ReadInt(4)](len, ply)
+    end)
+else
+    local function update_sample(ply, i, v)
+        local sampler = wowozela.GetSampler(ply)
+        if not sampler then return end
+        if v then
+            sampler:SetSample(i, v.custom, v.path)
+        elseif sampler.Samples and sampler.Samples[i] then
+            if IsValid(sampler.Samples[i].obj) then
+                sampler.Samples[i].obj:Stop()
+            end
+            sampler.Samples[i] = nil
+        end
+    end
+
+    local netFuncs = {
+        [wowozela.NET.wowozela_pitch] = function()
+            local ply = net.ReadEntity()
+            if not IsValid(ply) or not wowozela.GetSampler(ply) then return end
+            ply.wowozela_real_pitch = net.ReadFloat()
+        end,
+        [wowozela.NET.wowozela_key] = function()
+            local ply = net.ReadEntity()
+            if not IsValid(ply) or not wowozela.GetSampler(ply) then return end
+            wowozela.KeyEvent(ply, net.ReadInt(32), net.ReadBool())
+        end,
+        [wowozela.NET.wowozela_update_samples] = function()
+            for i, v in pairs(net.ReadTable()) do
+                wowozela.KnownSamples[i] = v
+            end
+
+            if not net.ReadBool() then
+                local updatedPly = 4500 + net.ReadUInt(10) * 15
+                for _, ply in ipairs(player.GetHumans()) do
+                    for i = updatedPly, updatedPly + 11 do
+                        local v = wowozela.KnownSamples[i]
+                        update_sample(ply, i, v)
+                    end
+                end
+                return
+            end
+
+            wowozela.SetSampleIndexLeft(1)
+            wowozela.SetSampleIndexRight(1)
+
+            for _, ply in ipairs(player.GetHumans()) do
+                local sampler = wowozela.GetSampler(ply)
+                if sampler then
+                    for _,v in pairs(sampler.Samples or {}) do
+                        if v.obj then
+                            v.obj:Stop()
+                        end
+                    end
+                    wowozela.CreateSampler(ply)
+                end
+                local wep = ply:GetActiveWeapon()
+                if wep:IsValid() and wep:GetClass() == "wowozela" then
+                    wep:LoadPages()
+                end
+            end
+        end,
+        [wowozela.NET.wowozela_sample] = function()
+            local ply = net.ReadEntity()
+            if not IsValid(ply) or not wowozela.GetSampler(ply) then return end
+            local sampler = wowozela.GetSampler(ply)
+            local key = net.ReadInt(32)
+            local id = net.ReadInt(32)
+
+            if sampler:IsPlaying() then
+                sampler:Start(id, key)
+            end
+        end,
+    }
+    net.Receive("wowozela", function()
+        netFuncs[net.ReadInt(4)]()
+    end)
 end
 
 
@@ -617,9 +679,22 @@ if CLIENT then -- sample meta
         self.WasPlaying = true
 
         local wep = self.Player:GetActiveWeapon()
+        local ang = self:GetAngles()
         local looping = IsValid(wep) and wep.GetLooping and wep:GetLooping()
 
         self:SetLooping(looping)
+
+        if self:IsKeyDown(IN_USE) then
+            if self.using_angle then
+                self:SetVolume(math.abs(ang.y - self.using_angle) / 20)
+            else
+                self.using_angle = ang.y
+            end
+        else
+            self.using_angle = false
+            self:SetVolume(1)
+        end
+
         self:SetPitch(self:GetPlayerPitch())
 
         if self:IsKeyDown(IN_ATTACK) or self:IsKeyDown(IN_ATTACK2) then
@@ -809,37 +884,10 @@ do -- hooks
 
         hook.Add("Think", "wowozela_think", wowozela.Think)
         timer.Create("WowozelaSlowThink", 0.5, 0, wowozela.SlowThink)
-
-        net.Receive("wowozela_sample", function()
-            local ply = net.ReadEntity()
-            if not IsValid(ply) then
-                return
-            end
-            local sampler = wowozela.GetSampler(ply)
-            if not sampler then
-                return
-            end
-            local key = net.ReadInt(32)
-            local id = net.ReadInt(32)
-
-            if sampler:IsPlaying() then
-                sampler:Start(id, key)
-            end
-        end)
-
-        net.Receive("wowozela_key", function()
-            local ply = net.ReadEntity()
-            if not ply:IsValid() or not wowozela.GetSampler(ply) then
-                return
-            end
-            local key = net.ReadInt(32)
-            local press = net.ReadBool()
-
-            wowozela.KeyEvent(ply, key, press)
-        end)
     else
         function wowozela.BroadcastKeyEvent(ply, key, press, filter)
-            net.Start("wowozela_key", true)
+            net.Start("wowozela", true)
+            net.WriteInt(wowozela.NET.wowozela_key, 4)
             net.WriteEntity(ply)
             net.WriteInt(key, 32)
             net.WriteBool(press)

@@ -92,33 +92,8 @@ if SERVER then
     function SWEP:OnDrop()
         self:Remove()
     end
-
-    util.AddNetworkString("wowozela_pitch")
-
-    net.Receive("wowozela_pitch", function(len, ply)
-        ply.net_incoming_rate_count = nil
-        ply.net_incoming_rate_count = nil
-
-        local pitch = net.ReadFloat()
-
-        ply.wowozela_real_pitch = pitch
-
-        net.Start("wowozela_pitch", true)
-            net.WriteEntity(ply)
-            net.WriteFloat(pitch)
-        net.SendOmit(ply)
-    end)
 end
 
-if CLIENT then
-    net.Receive("wowozela_pitch", function(len)
-        local ply = net.ReadEntity()
-        if not ply:IsValid() then return end
-        local pitch = net.ReadFloat()
-
-        ply.wowozela_real_pitch = pitch
-    end)
-end
 
 
 local DisableUnlimitedPitch
@@ -178,7 +153,8 @@ if CLIENT then
         cmd:SetViewAngles(ang + pitch_offset)
 
         if ply.wowozela_real_pitch ~= rcy then
-            net.Start("wowozela_pitch", true)
+            net.Start("wowozela", true)
+            net.WriteInt(wowozela.NET.wowozela_pitch, 4)
             net.WriteFloat(rcy)
             net.SendToServer()
             --print("sending")
@@ -267,7 +243,7 @@ end
 
 
 function SWEP:OnKeyEvent(key, press)
-    if self.GetLooping == nil then return end
+    --[=[if self.GetLooping == nil then return end
     if SERVER and key == IN_USE and press then
         if CurTime() - (self.LastUse or 0) <= 0.25 then return end
         self.LastUse = CurTime()
@@ -277,7 +253,7 @@ function SWEP:OnKeyEvent(key, press)
 
         self:SetLooping(not self:GetLooping())
         self:GetOwner():ChatPrint(("Looping is now %s."):format(self:GetLooping() and "enabled" or "disabled"))
-    end
+    end]=]
 end
 
 
@@ -565,6 +541,7 @@ if CLIENT then
     end
 
     local arrow_left_tex = Material("vgui/cursors/arrow")
+    local control_repeat = Material("icon16/control_repeat.png")
     local circle_tex = Material("particle/particle_glow_02")
 
     local lastHttp
@@ -654,6 +631,7 @@ if CLIENT then
         surface.DrawTexturedRect(x - offset, y, w2, h2)
     end
 
+
     local left_down, right_down
     local show_help_text = true
     local freeze_mouse
@@ -729,6 +707,7 @@ if CLIENT then
 
     local col_white = Color(255, 255, 255, 255)
     local col_red = Color(255, 0, 0, 255)
+    local was_down, lastBut = false, 0
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
@@ -842,12 +821,12 @@ if CLIENT then
                 end
 
                 if left_selected then
-                    draw_mouse_icon(x, y, left_down, not (left_selected and right_selected) and 0 or 1,
+                    draw_mouse_icon(x, y, hovered_wedge_index and left_down, not (left_selected and right_selected) and 0 or 1,
                         left_mouse_button_tex)
                 end
 
                 if right_selected then
-                    draw_mouse_icon(x, y, right_down, not (left_selected and right_selected) and 0 or -1,
+                    draw_mouse_icon(x, y, hovered_wedge_index and right_down, not (left_selected and right_selected) and 0 or -1,
                         right_mouse_button_tex)
                 end
             end
@@ -897,6 +876,25 @@ if CLIENT then
                 surface.DrawTexturedRectRotated(right_x, center_y, s2, s2, 45 + 180)
             end
 
+            surface.SetMaterial(control_repeat)
+            do
+                local bsize = 16
+                local x, y = center_x - bsize / 2, center_y - bsize / 2 + 18
+
+                local looping = self:GetLooping()
+                surface.SetDrawColor(255, 255, 255, looping and 255 or 125)
+                surface.DrawTexturedRect(x, y, bsize, bsize)
+                if mouse_x > x and mouse_x <= x + bsize and mouse_y > y and mouse_y <= y + bsize then
+                    if left_down and not was_down then
+                        was_down = true
+                        net.Start("wowozela")
+                            net.WriteInt(wowozela.NET.wowozela_togglelooping, 4)
+                        net.SendToServer()
+                    elseif not left_down then
+                        was_down = false
+                    end
+                end
+            end
             -- surface.DrawTexturedRectRotated(left_x, center_y, w, h, 0)
             -- surface.DrawTexturedRectRotated(right_x, center_y, w, h, 180)
 
