@@ -291,7 +291,8 @@ if SERVER then
         end
     }
     net.Receive("wowozela", function(len, ply)
-        netFuncs[net.ReadInt(4)](len, ply)
+        local func = netFuncs[net.ReadInt(4)]
+        if func then func(len, ply) end
     end)
 else
     local function update_sample(ply, i, v)
@@ -366,7 +367,8 @@ else
         end,
     }
     net.Receive("wowozela", function()
-        netFuncs[net.ReadInt(4)]()
+        local func = netFuncs[net.ReadInt(4)]
+        if func then func() end
     end)
 end
 
