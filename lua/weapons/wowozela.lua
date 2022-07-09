@@ -707,7 +707,7 @@ if CLIENT then
 
     local col_white = Color(255, 255, 255, 255)
     local col_red = Color(255, 0, 0, 255)
-    local was_down, lastBut = false, 0
+    local was_down = false
     function SWEP:DrawHUD()
         if not self.Pages then
             self:LoadPages()
