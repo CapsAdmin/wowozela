@@ -12,7 +12,7 @@ SWEP.Base = "weapon_base"
 
 SWEP.Author = ""
 SWEP.Contact = ""
-SWEP.Purpose = ""
+SWEP.Purpose = "A simple fretless instrument that changes with your eye pitch"
 SWEP.Instructions = ""
 SWEP.PrintName = "Wowozela"
 -- SWEP.Category = "Toys"
@@ -40,6 +40,7 @@ SWEP.DrawAmmo = false
 SWEP.DrawCrosshair = true
 SWEP.ViewModel = "models/weapons/v_hands.mdl"
 SWEP.WorldModel = "models/weapons/w_bugbait.mdl"
+SWEP.IconOverride = "materials/entities/wowozela.jpg"
 SWEP.DrawWeaponInfoBox = true
 SWEP.RenderGroup = RENDERGROUP_BOTH
 
@@ -50,15 +51,18 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool", 0, "Looping")
 end
 
-function SWEP:PrintWeaponInfo()
-end
-
 local mat = Material("particle/fire")
 
 function SWEP:DrawWeaponSelection(x,y,w,h,a)
     surface.SetDrawColor(HSVToColor(RealTime() * 10, 1, 1))
     surface.SetMaterial(mat)
     surface.DrawTexturedRect(x,y-w / 6,w,w)
+
+    x = x + 10
+    y = y + 10
+    w = w - 20
+
+    self:PrintWeaponInfo( x + w + 20, y + h * 0.95, alpha )
 end
 
 function SWEP:CanPrimaryAttack()

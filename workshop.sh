@@ -13,6 +13,6 @@ fi
 export LD_LIBRARY_PATH="../../../bin/linux64/"
 
 $gmad create -folder "./" -out "_TEMP.gma"
-$gmpublish update -addon "_TEMP.gma" -id "$WORKSHOP_ID" -icon "icon.jpg"
+$gmpublish update -addon "_TEMP.gma" -id "$WORKSHOP_ID" -icon "materials/entities/wowozela.jpg"
 
 rm ./_TEMP.gma
